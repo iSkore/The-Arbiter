@@ -1,0 +1,20 @@
+if ! [ -x "$(command -v npm)" ]; then
+    echo "npm not found - Please install NodeJS from nodejs.org before running this!"
+fi
+
+if ! [ -x "$(command -v http-server)" ]; then
+    echo "http-server not found - install it now!"
+    npm install http-server -g
+fi
+
+if ! [ -f ./.ssl/https.cert ]; then
+    echo "https.key and https.cert do not exist"
+    mkdir .ssl/
+    cd .ssl/
+    openssl req -nodes -new -x509 \
+        -subj "/C=US/ST=localhost/L=localhost/O=localhost/CN=localhost" \
+        -keyout https.key -out https.cert -days 365
+    cd ..
+fi
+
+http-server -S -C ./.ssl/https.cert -K ./.ssl/https.key

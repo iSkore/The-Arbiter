@@ -1,0 +1,43 @@
+# BUCKET to upload to
+BUCKET=s3://$1
+
+# Optional profile
+PROFILE=$2
+
+# specify folders if thou so choose
+ENV=/
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "LOADING - PLEASE BE PATIENT..."
+
+aws s3 sync \
+	$DIR/ \
+	$BUCKET$ENV \
+	--delete \
+	--quiet \
+	--exclude "*$0*" \
+	--exclude "*.git*" \
+	--exclude "*.DS_Store*" \
+	--exclude "*.DS_Store" \
+	--exclude ".DS_Store" \
+	--exclude "*/.DS_Store*" \
+	--exclude "*/.DS_Store" \
+	--exclude "__MACOSX__" \
+	--exclude "./__MACOSX__" \
+	--exclude "*/__MACOSX__" \
+	--exclude "*/__MACOSX__*" \
+	--exclude "*.idea*" \
+	--exclude "*.tmp*" \
+	--exclude "*.tags*" \
+	--exclude "*.tags1*" \
+	--exclude "*.log*" \
+	--exact-timestamps \
+	--profile $PROFILE
+
+echo -ne '\n'
+echo ''
+echo "ASSETS PUBLISHED"
+echo "    FROM [ $DIR/ ]"
+echo "    TO   [ $BUCKET ]"
+echo ''
