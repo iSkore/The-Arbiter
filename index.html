@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
     <title>P3</title>
     <link rel="stylesheet" type="text/css" href="includes/css/main.css">
 </head>
 <body>
 <script type="text/javascript" src="includes/js/jquery.min.js"></script>
-<script type="text/javascript" src="includes/js/main.js"></script>
+<script type="text/javascript" src="includes/js/arbiter.js"></script>
 <script type="text/javascript">
 
 function onApplicationDidAppear() {
@@ -18,9 +18,10 @@ function onApplicationDidAppear() {
 
 function onApplicationDidLoad() {
     console.log( 'Application Did Load' );
-    _a.load( 'home', true, () => {
-        console.log( 'pageDidLoad' );
-    } );
+}
+
+function onApplicationIsReady() {
+    console.log( 'Application Is Ready' );
 }
 
 function onPageDidChange( e ) {

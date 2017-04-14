@@ -1,37 +1,5 @@
 'use strict';
 
-const config = {
-    pagePath: 'main',
-    pages: {
-        home: {
-            name: 'https://google.com',
-            title: 'P3 | Home',
-            preload: true,
-            data: null,
-            preRender: () => {},
-            onRender: () => {},
-            postRender: () => {}
-        },
-        login: {
-            name: 'login',
-            title: 'P3 | Login',
-            preload: true,
-            data: null,
-            preRender: () => {},
-            onRender: () => {},
-            postRender: () => {}
-        },
-        test: {
-            name: 'test',
-            preload: false,
-            data: null,
-            preRender: () => {},
-            onRender: () => {},
-            postRender: () => {}
-        }
-    }
-};
-
 class Monitor
 {
     constructor()
@@ -50,9 +18,10 @@ class Monitor
 
         this.memoryUsage = +( ( performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit ) * 100 ).toFixed( 3 );
 
-        if( this.memoryUsage >= 80 )
+        if( this.memoryUsage >= 80 ) {
+            _pages.pages = null;
             applicationDidReceiveMemoryWarning( 'Analyze will not run due to memory issue.' );
-        else
+        } else
             this.start();
     }
 
@@ -100,6 +69,7 @@ class Arbiter extends Monitor
         this.pages = pages;
 
         this.activePage = null;
+        this.isReady = false;
 
         Object.defineProperty( this, 'currentPage', {
             get: () => {
@@ -114,6 +84,8 @@ class Arbiter extends Monitor
 
     init()
     {
+        this.i = 0;
+
         if( !$ )
             throw 'Dependency Error - JQuery is needed.';
 
@@ -122,23 +94,20 @@ class Arbiter extends Monitor
         Object.keys( this.pages ).map(
             item => new Page(
                 item,
-                this.pages[ item ].title,
-                this.pages[ item ].preload,
-                this.pages[ item ].data,
-                this.pages[ item ].preRender,
-                this.pages[ item ].onRender,
-                this.pages[ item ].postRender
+                this.pages[ item ]
             ).apply( this )
         );
 
-        onApplicationDidLoad();
+        this.isReady = true;
 
-        return this;
+        this.load( _pages.mainFile, true, () => onApplicationIsReady() );
     }
 
     render( page )
     {
         page.preRender();
+
+        page.isLoaded = true;
 
         this.currentPage = page;
         document.title   = page.title;
@@ -151,32 +120,52 @@ class Arbiter extends Monitor
         );
     }
 
+    request( url )
+    {
+        return new Promise( ( res, rej ) => {
+            let http = new XMLHttpRequest();
+            http.onreadystatechange = () => {
+                if( http.readyState === 4 && http.status === 200 ) {
+                    res( http );
+                } else if( http.readyState === 4 && http.status >= 400 ) {
+                    rej( http );
+                }
+            };
+            http.open( 'GET', url, true );
+            http.send( null );
+        } );
+    }
+
     load( name, render = true, handler = () => {} )
     {
         name = this.hashToKey( name );
 
-        if( this.pages.hasOwnProperty( name ) && this.pages[ name ].isLoaded ) {
-            if( render )
-                this.render( this.pages[ name ] );
+        if( this.pages[ name ].data )
+            this.pages[ name ].isLoaded = true;
 
+        console.log( this, name, render );
+
+        console.log( this.i, this.pages[ name ].isLoaded, render );
+        this.i++;
+
+        if( this.pages[ name ].isLoaded && render ) {
+            this.render( this.pages[ name ] );
             handler();
-        } else
-            $.ajax( {
-                type: 'GET',
-                url: this.routes[ name ]
-            } )
-                .done( res => {
-                    this.pages[ name ].data = res;
+        } else {
+            let url = this.pages[ name ].path || _pages.pages[ _pages.mainFile ];
+            console.log( url );
+            this.request( url )
+                .then( http => {
+                    this.pages[ name ].data = http.responseText;
                     this.pages[ name ].isLoaded = true;
 
                     if( render )
                         this.render( this.pages[ name ] );
 
-                    handler( res );
+                    handler( http );
                 } )
-                .fail( rej => {
-                    console.error( rej );
-                } );
+                .catch( rej => console.error( 'Error loading: ' + name, rej ) );
+        }
 
         return false;
     }
@@ -204,29 +193,33 @@ class Arbiter extends Monitor
 
 class Page
 {
-    constructor( name, title = '', preload, data, preRender, onRender, postRender )
+    constructor( name, page )
     {
-        if( typeof preRender !== 'function' )
-            preRender = Arbiter.executor( preRender );
+        this.title      = page.title || page.name || name || '';
+        this.name       = page.name || page.title;
+        this.path       = `${_pages.pagePath}/${name}.html`;
+        this.data       = page.data || null;
+        this.preRender  = page.preRender || ( () => {} );
+        this.onRender   = page.onRender || ( () => {} );
+        this.postRender = page.postRender || ( () => {} );
+        this.preload    = page.preload || false;
+        this.isLoaded   = !!( page.data );
+        this.link       = page.link || null;
 
-        if( typeof onRender !== 'function' )
-            onRender = Arbiter.executor( onRender );
+        if( this.link && this.isValidURL( this.link ) )
+            this.path = this.link;
 
-        if( typeof postRender !== 'function' )
-            postRender = Arbiter.executor( postRender );
+        if( typeof this.preRender !== 'function' )
+            this.preRender = Arbiter.executor( this.preRender );
 
-        this.title      = title || name || '';
-        this.name       = name;
-        this.path       = this.isValidURL( name ) ? name : `${config.pagePath}/${name}.html`;
-        this.data       = data || null;
-        this.preRender  = preRender;
-        this.onRender   = onRender;
-        this.postRender = postRender;
-        this.preload    = preload;
-        this.isLoaded   = !!( data );
-        this.viewed     = [];
+        if( typeof this.onRender !== 'function' )
+            this.onRender = Arbiter.executor( this.onRender );
+
+        if( typeof this.postRender !== 'function' )
+            this.postRender = Arbiter.executor( this.postRender );
 
         this.hasBeenRendered = false;
+
         Object.defineProperty( this, 'isRendered', {
             get: () => {
                 return this.hasBeenRendered;
@@ -255,39 +248,71 @@ class Page
     }
 }
 
-let _a;
+const
+    _pages = {
+        pagePath: 'main',
+        mainFile: 'home',
+        pages: {
+            home: {
+                name: 'home',
+                // link: 'https://s3.amazonaws.com/portal-new.exploreplanet3.com/main/login.html',
+                title: 'P3 | Home',
+                preload: true,
+                data: null,
+                preRender: () => {},
+                onRender: () => {},
+                postRender: () => {}
+            },
+            login: {
+                name: 'login',
+                title: 'P3 | Login',
+                preload: true,
+                data: null,
+                preRender: () => {},
+                onRender: () => {},
+                postRender: () => {}
+            },
+            test: {
+                name: 'test',
+                preload: false,
+                data: null,
+                preRender: () => {},
+                onRender: () => {},
+                postRender: () => {}
+            }
+        }
+    },
+    _a = new Arbiter( _pages.pages );
 
-$( document ).ready( () => {
-    _a = new Arbiter( config.pages );
-    _a.init();
-} );
+_a.init();
+
+function applicationDidAppear() {
+    onApplicationDidAppear();
+}
+
+function applicationDidLoad( e ) {
+    onApplicationDidLoad();
+}
 
 function locationHashChanged( e ) {
-    // TODO: manage ( e.oldURL, e.newURL )?
-
     if( !_a.isPageRouted( location.hash ) ) {
         console.error( `${location.hash} is not managed by The Arbiter.` );
         return;
     }
 
-    if( _a.currentPage !== _a.hashToKey( location.hash ) )
-        _a.load( location.hash, true, () => {
-            console.log( location.hash + ' loaded' );
-        } );
+    if( _a.hashToKey( location.hash ) && '' !== _a.currentPage )
+        return;
 
-    onLocationHashChanged( e );
+    _a.load( location.hash, true, () => {
+        console.log( location.hash + ' loaded' );
+    } );
+
+    return onLocationHashChanged( e );
 }
-
-window.onhashchange = locationHashChanged;
-
 
 function pageDidChange( e ) {
     onPageDidChange( e );
 }
-
-window.addEventListener( 'popstate', pageDidChange );
-
-setTimeout( () => onApplicationDidAppear(), 1 );
 
 function applicationDidUnload() {
     onApplicationDidUnload();
@@ -296,6 +321,14 @@ function applicationDidUnload() {
 
     return onApplicationDidDisappear();
 }
+
+window.onload = applicationDidLoad;
+
+document.addEventListener( 'DOMContentLoaded', e => applicationDidAppear() );
+
+window.onhashchange = locationHashChanged;
+
+window.addEventListener( 'popstate', pageDidChange );
 
 window.onbeforeunload = applicationDidUnload;
 
@@ -320,8 +353,8 @@ window.onbeforeunload = applicationDidUnload;
 //             if( item.hash ) {
 //                 const hash = _c.util.hashToKey( item.hash );
 //
-//                 if( config.pages.hasOwnProperty( hash ) )
-//                     config.pages[ hash ] = new Page( item.hash, true ).apply( _c );
+//                 if( _pages.pages.hasOwnProperty( hash ) )
+//                     _pages.pages[ hash ] = new Page( item.hash, true ).apply( _c );
 //
 //                 $( item ).mouseup( () => {
 //                     console.log( ":FUCIK" );
@@ -341,3 +374,18 @@ window.onbeforeunload = applicationDidUnload;
 //     element.src = file;
 //     document.body.appendChild( element );
 // }
+
+// $.ajax( {
+//     type: 'GET',
+//     url: this.routes[ name ]
+// } )
+// .done( res => {
+//     this.pages[ name ].data = res;
+//     this.pages[ name ].isLoaded = true;
+//
+//     if( render )
+//         this.render( this.pages[ name ] );
+//
+//     handler( res );
+// } )
+// .fail( rej => console.error( 'Error loading: ' + name, rej ) );
