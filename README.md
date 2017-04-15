@@ -30,12 +30,12 @@ const
         pages: [
             {
                 name: 'home',
-                title: 'P3 | Home',
+                title: 'Website | Home',
                 preload: false,
                 data: null,
-                preRender: () => console.log( 'pre' ),
-                onRender: () => console.log( 'on' ),
-                postRender: () => console.log( 'post' )
+                preRender: "console.log( 'pre' )",
+                onRender: "console.log( 'on' )",
+                postRender: "console.log( 'post' )"
             }
         ]
     },
