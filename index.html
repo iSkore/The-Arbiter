@@ -9,7 +9,6 @@
 </head>
 <body>
 <script type="text/javascript" src="includes/js/jquery.min.js"></script>
-<script type="text/javascript" src="includes/js/arbiter.js"></script>
 <script type="text/javascript">
 
 function onApplicationDidAppear() {
@@ -41,9 +40,10 @@ function onApplicationDidDisappear() {
 }
 
 function applicationDidReceiveMemoryWarning() {
-
+    console.log( 'Application Did Receive Memory Warning' );
 }
 
 </script>
+<script type="text/javascript" src="includes/js/arbiter.js"></script>
 </body>
 </html>
