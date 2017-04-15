@@ -21,8 +21,8 @@ const
     _pages = {
         pagePath: 'main',
         mainFile: 'home',
-        pages: {
-            home: {
+        pages: [
+            {
                 name: 'home',
                 title: 'P3 | Home',
                 preload: false,
@@ -31,7 +31,7 @@ const
                 onRender: () => { console.log( 'on' ); },
                 postRender: "console.log( 'post' );"
             },
-            login: {
+            {
                 name: 'login',
                 title: 'P3 | Login',
                 preload: true,
@@ -40,7 +40,7 @@ const
                 onRender: () => {},
                 postRender: () => {}
             },
-            test: {
+            {
                 name: 'test',
                 preload: false,
                 data: null,
@@ -48,7 +48,7 @@ const
                 onRender: () => {},
                 postRender: () => {}
             }
-        }
+        ]
     },
     _a = new Arbiter( _pages );
 

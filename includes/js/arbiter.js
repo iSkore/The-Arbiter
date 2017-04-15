@@ -7,7 +7,10 @@ class Arbiter extends Monitor
         this.routes = {};
 
         this.config = pages;
-        this.pages = pages.pages;
+        this.pages = pages.pages.reduce( ( r, page ) => {
+            r[ page.name ] = page;
+            return r;
+        }, {} );
 
         this.activePage = null;
         this.isReady = false;
