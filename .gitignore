@@ -10,6 +10,7 @@ clover.xml
 .tags
 .tags1
 .ssh
+.ssl
 
 # Node logs
 npm-debug.log*

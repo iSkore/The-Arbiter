@@ -9,7 +9,50 @@
 </head>
 <body>
 <script type="text/javascript" src="includes/js/jquery.min.js"></script>
+<script type="text/javascript" src="includes/js/Generator.js"></script>
+<script type="text/javascript" src="includes/js/Executor.js"></script>
+<script type="text/javascript" src="includes/js/Page.js"></script>
+<script type="text/javascript" src="includes/js/Monitor.js"></script>
+<script type="text/javascript" src="includes/js/Arbiter.js"></script>
 <script type="text/javascript">
+'use strict';
+
+const
+    _pages = {
+        pagePath: 'main',
+        mainFile: 'home',
+        pages: {
+            home: {
+                name: 'home',
+                title: 'P3 | Home',
+                preload: false,
+                data: null,
+                preRender: () => { console.log( 'pre' ); },
+                onRender: () => { console.log( 'on' ); },
+                postRender: "console.log( 'post' );"
+            },
+            login: {
+                name: 'login',
+                title: 'P3 | Login',
+                preload: true,
+                data: null,
+                preRender: () => {},
+                onRender: () => {},
+                postRender: () => {}
+            },
+            test: {
+                name: 'test',
+                preload: false,
+                data: null,
+                preRender: () => {},
+                onRender: () => {},
+                postRender: () => {}
+            }
+        }
+    },
+    _a = new Arbiter( _pages );
+
+_a.init();
 
 function onApplicationDidAppear() {
     console.log( 'Application Did Appear' );
@@ -44,6 +87,5 @@ function applicationDidReceiveMemoryWarning() {
 }
 
 </script>
-<script type="text/javascript" src="includes/js/arbiter.js"></script>
 </body>
 </html>
