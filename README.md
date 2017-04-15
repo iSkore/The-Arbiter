@@ -6,6 +6,7 @@ The Arbiter is a full managed HTML routing and analytics system for front end ma
 The Arbiter preloads pages into memory and swaps pages into a container `DIV`. This significantly increases render time and page navigation.
 Custom page-specific rendering can be done in one of three states: `preRender`, `onRender`, `postRender`.
 
+------
 
 ### Configuration:
 
@@ -17,6 +18,7 @@ Custom page-specific rendering can be done in one of three states: `preRender`, 
 <script type="text/javascript" src="includes/js/Arbiter.js"></script>
 ```
 
+------
 
 ### Set up and config
 
@@ -60,18 +62,20 @@ _a.init();
 - `onRender` (function | string) the function called when the page is loaded
 - `postRender` (function | string) the function called after the page is loaded
 
+------
 
 ### Application Lifecycle
 
-- **onApplicationDidAppear**: called immediately when the application starts to load
-- **onApplicationDidLoad**: called after the DOM loads
-- **onApplicationIsReady**: called after The Arbiter finishes loading and the application is ready
-- **onPageDidChange**: called on page change (Example: back, forward, refresh)
-- **onLocationHashChanged**: called when the hyperlink hash changes (Example: `#home` to `#login`)
-- **onApplicationDidUnload**: called when the application starts to close
-- **onApplicationDidDisappear**: called just before the application closes
-- **applicationDidReceiveMemoryWarning**: called if The Monitor detects a memory issue
+- **`onApplicationDidAppear`**: called immediately when the application starts to load
+- **`onApplicationDidLoad`**: called after the DOM loads
+- **`onApplicationIsReady`**: called after The Arbiter finishes loading and the application is ready
+- **`onPageDidChange`**: called on page change (Example: back, forward, refresh)
+- **`onLocationHashChanged`**: called when the hyperlink hash changes (Example: `#home` to `#login`)
+- **`onApplicationDidUnload`**: called when the application starts to close
+- **`onApplicationDidDisappear`**: called just before the application closes
+- **`applicationDidReceiveMemoryWarning`**: called if The Monitor detects a memory issue
 
+------
 
 ### The Arbiter
 
@@ -121,6 +125,7 @@ Manages page routing, monitoring, and lifecycle.
     - Arguments: `(string) hash`
     - Returns if(?) the page is currently rendered
 
+------
 
 ### The Monitor
 
@@ -155,22 +160,76 @@ Monitors memory, page duration, and activity.
     - Adds: `activePage`, `navigatedTo`, `viewTime`, `viewDuration`, `memoryUsage` to `views` object
     - Saves state of The Monitor
 
+------
 
 ### The Generator
 
 ![generator][2]
 
-Sets up a promisedified `generatorFunction` to contain and manage a code execution.
+Sets up a promisified `generatorFunction` to contain and manage a code execution.
 A contained code execution environment allows code passed in JSON to be executed without effecting other code in the `window`.
 
+- `generator`
+    - Arguments: `(__generatorFunction__) gen`
+    - Wraps a `generator` into a handled promise-like state for `success` and `error` handling
+
+- `generator.container`
+    - Arguments: `(function) func`
+    - Creates a container around a function so code execution is separate from the others
+
+- `toPromise`
+    - Arguments: `(object) obj`
+    - Coerces anything into a promise
+
+- `thunkToPromise`
+    - Arguments: `(function) fn`
+    - Sometimes you think a function _returns_ or _is_ a promise, but it's not. Sometimes you think it's a `function` but it doesn't have "arguments".
+    - This function takes what you _thunk_ was a promise, calls it, and sends it back as an actual promise.
+
+- `arrayToPromise`
+    - Arguments: `(array) obj`
+    - Coerces an Array into a promise
+
+- `objectToPromise`
+    - Arguments: `(object) obj`
+    - Coerces an Object into a promise
+
+- `isPromise`
+    - Arguments: `(Anything) obj`
+    - Returns if(?) it's `thenable`
+
+- `isGenerator`
+    - Arguments: `(Anything) obj`
+    - Returns if(?) it's `thenable` and `throwable` because it must catch errors
+
+- `isGeneratorFunction`
+    - Arguments: `(Anything) obj`
+    - Returns if(?) an object is a `generator`
+
+- `isObject`
+    - Arguments: `(Anything) obj`
+    - Returns if(?) `obj` is a real `object`
+
+------
 
 ### The Executor
 
 ![executor][3]
 
-Executes the code in a `container`
+Executes a string of code in a `container`.
+
+- `constructor`
+    - Builds a `Generator`
+    - Executes the string as code inside a container
+
+- `success`
+    - Called if things are OK
+
+- `error`
+    - Called if things aren't OK
+
 
 [0]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/arbiter.png "The Arbiter"
 [1]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/monitor.png "The Monitor"
 [2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/generator.png "The Generator"
-[2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/executor.png "The Executor"
+[3]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/executor.png "The Executor"

@@ -132,6 +132,6 @@ function isGeneratorFunction( obj ) {
     return isGenerator( constructor.prototype );
 }
 
-function isObject( val ) {
-    return Object == val.constructor;
+function isObject( obj ) {
+    return Object == obj.constructor;
 }
