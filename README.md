@@ -6,6 +6,7 @@ The Arbiter is a full managed HTML routing and analytics system for front end ma
 The Arbiter preloads pages into memory and swaps pages into a container `DIV`. This significantly increases render time and page navigation.
 Custom page-specific rendering can be done in one of three states: `preRender`, `onRender`, `postRender`.
 
+
 ### Configuration:
 
 ```html
@@ -15,6 +16,7 @@ Custom page-specific rendering can be done in one of three states: `preRender`, 
 <script type="text/javascript" src="includes/js/Monitor.js"></script>
 <script type="text/javascript" src="includes/js/Arbiter.js"></script>
 ```
+
 
 ### Set up and config
 
@@ -58,6 +60,7 @@ _a.init();
 - `onRender` (function | string) the function called when the page is loaded
 - `postRender` (function | string) the function called after the page is loaded
 
+
 ### Application Lifecycle
 
 - **onApplicationDidAppear**: called immediately when the application starts to load
@@ -69,9 +72,105 @@ _a.init();
 - **onApplicationDidDisappear**: called just before the application closes
 - **applicationDidReceiveMemoryWarning**: called if The Monitor detects a memory issue
 
+
 ### The Arbiter
 
 ![arbiter][0]
 
+Manages page routing, monitoring, and lifecycle.
 
-[0]: ./docs/the-arbiter.png
+- `constructor`
+    - Arguments: nothing
+    - Sets up routes, pages, and `currentPage`
+
+- `init`
+    - Arguments: nothing
+    - Gets the `body` container - modify this to call another `div` if you have a permanent navigation bar or something like that
+    - Constructs the pages
+    - Loads the `mainFile` and calls `onApplicationIsReady`
+
+- `render`
+    - Arguments: `Page object`
+    - Calls `preRender`, `onRender`, and `postRender` in their respective order
+    - Sets `currentPage`
+    - Sets `document.title` and `location.hash`
+    - Sends page data to the render container
+
+- `request`
+    - Arguments: `(string) url`
+    - Loads the html page - can be used to load any http page
+
+- `load`
+    - Arguments: `(string) name of the page, (bool) render it?, (function) callback`
+    - Renders a page if it is loaded into memory, otherwise, `request`'s it, stores it, and then calls `render`
+    - Responses with the `XMLHttpRequest` on `readyState 4`
+
+- `hashToKey`
+    - Arguments: `(string) hash`
+    - Removes `#` in `location.hash` URI component and returns result
+
+- `isPageRouted`
+    - Arguments: `(string) hash`
+    - Returns if(?) the page is routed and managed by The Arbiter
+
+- `isPageLoaded`
+    - Arguments: `(string) hash`
+    - Returns if(?) the page has been loaded into memory
+
+- `isPageRendered`
+    - Arguments: `(string) hash`
+    - Returns if(?) the page is currently rendered
+
+
+### The Monitor
+
+![monitor][1]
+
+Monitors memory, page duration, and activity.
+
+- `constructor`
+    - Arguments: nothing
+    - Sets up monitoring
+
+- `analyze`
+    - Arguments: `(string) name`
+    - Calls `start` and `stop` to handle page change requests
+    - Checks and reports on memory usage
+
+- `onMemoryWarning`
+    - Arguments: nothing
+    - Manual override memory warning to stop the monitor from running
+
+- `inquiry`
+    - Arguments: nothing
+    - Returns the current list of page analytics
+
+- `start`
+    - Arguments: nothing
+    - Starts a "timer" for the currently rendered page
+
+- `stop`
+    - Arguments: nothing
+    - Stops the "timer" for the currently rendered page
+    - Adds: `activePage`, `navigatedTo`, `viewTime`, `viewDuration`, `memoryUsage` to `views` object
+    - Saves state of The Monitor
+
+
+### The Generator
+
+![generator][2]
+
+Sets up a promisedified `generatorFunction` to contain and manage a code execution.
+A contained code execution environment allows code passed in JSON to be executed without effecting other code in the `window`.
+
+
+### The Executor
+
+![executor][3]
+
+Executes the code in a `container`
+
+[0]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/arbiter.png "The Arbiter"
+[1]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/monitor.png "The Monitor"
+[2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/generator.png "The Generator"
+[2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/executor.png "The Executor"

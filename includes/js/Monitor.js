@@ -27,8 +27,8 @@ class Monitor
 
     onMemoryWarning( e )
     {
-        this.canRun = false;
         this.stop();
+        this.canRun = false;
         applicationDidReceiveMemoryWarning( e );
     }
 

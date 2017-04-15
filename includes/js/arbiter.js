@@ -58,8 +58,8 @@ class Arbiter extends Monitor
 
         return (
             this.container.html( page.data ),
-                page.onRender(),
-                page.isRendered = true
+            page.onRender(),
+            page.isRendered = true
         );
     }
 
@@ -68,7 +68,7 @@ class Arbiter extends Monitor
         return new Promise( ( res, rej ) => {
             let http = new XMLHttpRequest();
             http.onreadystatechange = () => {
-                if( http.readyState === 4 && http.status === 200 ) {
+                if( http.readyState === 4 && http.status <= 308 ) {
                     res( http );
                 } else if( http.readyState === 4 && http.status >= 400 ) {
                     rej( http );
@@ -130,16 +130,32 @@ class Arbiter extends Monitor
         hash = this.hashToKey( hash );
         return this.isPageLoaded( hash ) ? this.pages[ hash ].isRendered : false;
     }
+
+    static applicationDidAppear()
+    {
+        onApplicationDidAppear();
+    }
+
+    static applicationDidLoad( e )
+    {
+        onApplicationDidLoad();
+    }
+
+    static locationChanged( e )
+    {
+        // TODO: put location change in static space
+        onLocationHashChanged( e );
+    }
+
+    static applicationDidUnload()
+    {
+        onApplicationDidUnload();
+        // TODO: internal unloading, saving analytics/state
+        return onApplicationDidDisappear();
+    }
 }
 
-function applicationDidAppear() {
-    onApplicationDidAppear();
-}
-
-function applicationDidLoad( e ) {
-    onApplicationDidLoad();
-}
-
+// TODO: this will break if someone doesn't call it _a... ya we'll work on this...
 function locationHashChanged( e ) {
     if( !_a.isPageRouted( location.hash ) ) {
         console.warn( `${location.hash} is not managed by The Arbiter.` );
@@ -157,32 +173,23 @@ function locationHashChanged( e ) {
         console.log( location.hash + ' loaded' );
     } );
 
-    return onLocationHashChanged( e );
+    Arbiter.locationChanged( e );
 }
 
 function pageDidChange( e ) {
-    console.log( 'PAGE CHANGED' );
     locationHashChanged( e );
     onPageDidChange( e );
 }
 
-function applicationDidUnload() {
-    onApplicationDidUnload();
+window.onload = Arbiter.applicationDidLoad;
 
-    // TODO: internal unloading, saving analytics/state
-
-    return onApplicationDidDisappear();
-}
-
-window.onload = applicationDidLoad;
-
-document.addEventListener( 'DOMContentLoaded', e => applicationDidAppear() );
+document.addEventListener( 'DOMContentLoaded', e => Arbiter.applicationDidAppear() );
 
 window.onhashchange = locationHashChanged;
 
 window.addEventListener( 'popstate', pageDidChange );
 
-window.onbeforeunload = applicationDidUnload;
+window.onbeforeunload = Arbiter.applicationDidUnload;
 
 
 // const pushURL = href => {
