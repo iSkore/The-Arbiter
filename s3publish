@@ -1,3 +1,5 @@
+# Usage: `s3publish bucket-name default-profile`
+
 # BUCKET to upload to
 BUCKET=s3://$1
 
