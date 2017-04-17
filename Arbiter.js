@@ -5,16 +5,16 @@ const
     Page    = require( './Page' ),
     PubSub  = require( './PubSub' );
 
+// TODO save this to session storage
+// TODO create save and load function
+// TODO create on off variable for console.log debugging mode
+// TODO - √ - create pubsub
+// TODO - √ - allow page pre, on, and post functions to be accessed and editable
+
 class Arbiter extends Monitor
 {
     constructor( pages )
     {
-        // TODO save this to session storage
-        // TODO create save and load function
-        // TODO create on off variable for console.log debugging mode
-        // TODO - √ - create pubsub
-        // TODO - √ - allow page pre, on, and post functions to be accessed and editable
-
         super();
 
         this.version = 'v0.0.4';
@@ -72,11 +72,6 @@ class Arbiter extends Monitor
         this.load( Arbiter.activePage, true, this.onApplicationIsReady );
     }
 
-    changePage( hash )
-    {
-        location.hash = this.keyToHash( hash );
-    }
-
     render( page )
     {
         console.log( page );
@@ -102,11 +97,10 @@ class Arbiter extends Monitor
         return new Promise( ( res, rej ) => {
             let http = new XMLHttpRequest();
             http.onreadystatechange = () => {
-                if( http.readyState === 4 && http.status <= 308 ) {
+                if( http.readyState === 4 && http.status <= 308 )
                     res( http );
-                } else if( http.readyState === 4 && http.status >= 400 ) {
+                else if( http.readyState === 4 && http.status >= 400 )
                     rej( http );
-                }
             };
             http.open( 'GET', url, true );
             http.send( null );
@@ -143,6 +137,11 @@ class Arbiter extends Monitor
         }
 
         return false;
+    }
+
+    changePage( hash )
+    {
+        location.hash = this.keyToHash( hash );
     }
 
     /**
@@ -295,13 +294,12 @@ class Arbiter extends Monitor
 
     subscribeToPage( page, fn )
     {
-        console.log( this.getPage( page ) );
-        this.getPage( page ).PubSub.addSubscription( fn );
+        this.getPage( page ).addSubscription( fn );
     }
 
     publishForPage( page, event )
     {
-        this.getPage( page ).PubSub.publish( event );
+        this.getPage( page ).publish( event );
     }
 }
 
