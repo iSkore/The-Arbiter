@@ -12,6 +12,7 @@ class Page
         this.preload    = page.preload || false;
         this.link       = page.link || null;
         this.isLoaded   = !!this.html;
+        this.PubSub     = new PubSub( name );
 
         if( this.html )
             this.isLoaded = true;

@@ -114,11 +114,11 @@ function objectToPromise( obj ) {
 }
 
 function isPromise( obj ) {
-    return 'function' == typeof obj.then;
+    return 'function' === typeof obj.then;
 }
 
 function isGenerator( obj ) {
-    return 'function' == typeof obj.next && 'function' == typeof obj.throw;
+    return 'function' === typeof obj.next && 'function' === typeof obj.throw;
 }
 
 function isGeneratorFunction( obj ) {

@@ -2,9 +2,17 @@ class Arbiter extends Monitor
 {
     constructor( pages )
     {
+        // TODO save this to session storage
+        // TODO create save and load function
+        // TODO create pubsub
+        // TODO create on off variable for console.log debugging mode
+        // TODO allow page pre, on, and post functions to be accessed
+
         super();
 
         this.routes = {};
+
+        this.globalExecution = new PubSub();
 
         this.config = pages;
         this.pages = pages.pages.reduce( ( r, page ) => {
@@ -26,11 +34,14 @@ class Arbiter extends Monitor
         } );
     }
 
-    init()
+    /**
+     * init
+     * @param fn - run function on initialization
+     * @param globalExecution - add function to globalExecution
+     */
+    init( fn = () => {}, globalExecution = () => {} )
     {
-        if( !$ )
-            throw 'Dependency Error - JQuery is needed.';
-
+        fn = fn || ( () => {} );
         this.container = $( 'body' );
 
         Object.keys( this.pages ).map(
@@ -43,7 +54,16 @@ class Arbiter extends Monitor
 
         this.isReady = true;
 
-        this.load( this.config.mainFile, true, onApplicationIsReady );
+        fn();
+
+        this.globalExecution.addSubscription( globalExecution );
+
+        this.load( this.config.mainFile, true, this.onApplicationIsReady );
+    }
+
+    changePage( hash )
+    {
+        location.hash = this.keyToHash( hash );
     }
 
     render( page )
@@ -52,14 +72,18 @@ class Arbiter extends Monitor
 
         this.currentPage = page;
         document.title   = page.title;
-        location.hash    = `#${page.name}`;
+
+        if( location.hash !== `#${page.name}` )
+            location.hash = `#${page.name}`;
 
         Object.keys( this.pages ).map( page => this.pages[ page ].isRendered = false );
 
         return (
             this.container.html( page.data ),
-            page.onRender(),
-            page.isRendered = true
+                page.onRender(),
+                page.isRendered = true,
+                this.publishForPage( page ),
+                this.invokeGlobalExecution()
         );
     }
 
@@ -83,22 +107,25 @@ class Arbiter extends Monitor
     {
         name = this.hashToKey( name );
 
-        if( this.pages[ name ].data )
-            this.pages[ name ].isLoaded = true;
+        if( !this.isPageRouted( name ) )
+            return;
 
-        if( this.pages[ name ].isLoaded && render ) {
-            this.render( this.pages[ name ] );
+        if( this.getPage( name ).data )
+            this.getPage( name ).isLoaded = true;
+
+        if( this.getPage( name ).isLoaded && render ) {
+            this.render( this.getPage( name ) );
             handler();
         } else {
-            let url = this.pages[ name ].path || this.config.pages[ this.config.mainFile ];
+            let url = this.getPage( name ).path || this.config.pages[ this.config.mainFile ];
 
             this.request( url )
                 .then( http => {
-                    this.pages[ name ].isLoaded = true;
-                    this.pages[ name ].data = http.responseText;
+                    this.getPage( name ).isLoaded = true;
+                    this.getPage( name ).data = http.responseText;
 
                     if( render )
-                        this.render( this.pages[ name ] );
+                        this.render( this.getPage( name ) );
 
                     handler( http );
                 } )
@@ -106,6 +133,11 @@ class Arbiter extends Monitor
         }
 
         return false;
+    }
+
+    keyToHash( hash )
+    {
+        return hash.startsWith( '#' ) ? hash : `#${hash}`;
     }
 
     hashToKey( hash )
@@ -131,27 +163,98 @@ class Arbiter extends Monitor
         return this.isPageLoaded( hash ) ? this.pages[ hash ].isRendered : false;
     }
 
-    static applicationDidAppear()
+    isPage( page )
     {
-        onApplicationDidAppear();
+        return page instanceof Page;
     }
 
-    static applicationDidLoad( e )
+    pageToHash( page )
     {
-        onApplicationDidLoad();
+        if( this.isPage( page ) )
+            page = this.hashToKey( page.name );
+        else
+            page = this.hashToKey( page );
+
+        return page;
     }
 
-    static locationChanged( e )
+    getPage( page )
+    {
+        if( this.isPage( page ) )
+            return page;
+        else {
+            page = this.pageToHash( page );
+            return this.pages[ page ];
+        }
+    }
+
+    setMainFile( page )
+    {
+        this.config.mainFile = this.pageToHash( page );
+    }
+
+    addGlobalExecution( fn )
+    {
+        this.globalExecution.addSubscription( fn );
+    }
+
+    invokeGlobalExecution( event )
+    {
+        this.globalExecution.publish( event );
+    }
+
+    subscribeToPage( page, fn )
+    {
+        console.log( this.getPage( page ) );
+        this.getPage( page ).PubSub.addSubscription( fn );
+    }
+
+    publishForPage( page, event )
+    {
+        this.getPage( page ).PubSub.publish( event );
+    }
+
+    static onApplicationDidAppear()
+    {
+        console.log( 'Application Did Appear' );
+    }
+
+    static onApplicationDidLoad()
+    {
+        console.log( 'Application Did Load' );
+    }
+
+    static onApplicationIsReady()
+    {
+        console.log( 'Application Is Ready' );
+    }
+
+    static onPageDidChange( e )
+    {
+        console.log( 'Page Did Change' );
+    }
+
+    static onLocationHashChanged( e )
     {
         // TODO: put location change in static space
-        onLocationHashChanged( e );
+        console.log( 'Hash Did Change' );
     }
 
-    static applicationDidUnload()
+    static onApplicationDidUnload()
     {
-        onApplicationDidUnload();
         // TODO: internal unloading, saving analytics/state
-        return onApplicationDidDisappear();
+        console.log( 'Application Did Unload' );
+        return Arbiter.onApplicationDidDisappear();
+    }
+
+    static onApplicationDidDisappear()
+    {
+        console.log( 'Application Did Disappear' );
+    }
+
+    static onApplicationDidReceiveMemoryWarning()
+    {
+        console.log( 'Application Did Receive Memory Warning' );
     }
 }
 
@@ -162,9 +265,8 @@ function locationHashChanged( e ) {
         return;
     }
 
-    if( !_a.hashToKey( location.hash ) || _a.currentPage === '' ) {
+    if( !_a.hashToKey( location.hash ) || _a.currentPage === '' )
         return;
-    }
 
     if( _a.isPageRendered( location.hash ) )
         return;
@@ -173,23 +275,20 @@ function locationHashChanged( e ) {
         console.log( location.hash + ' loaded' );
     } );
 
-    Arbiter.locationChanged( e );
+    Arbiter.onLocationHashChanged( e );
 }
 
 function pageDidChange( e ) {
     locationHashChanged( e );
-    onPageDidChange( e );
+    Arbiter.onPageDidChange( e );
 }
 
-window.onload = Arbiter.applicationDidLoad;
-
-document.addEventListener( 'DOMContentLoaded', e => Arbiter.applicationDidAppear() );
-
-window.onhashchange = locationHashChanged;
-
+window.onhashchange   = locationHashChanged;
 window.addEventListener( 'popstate', pageDidChange );
 
-window.onbeforeunload = Arbiter.applicationDidUnload;
+document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
+window.onload         = Arbiter.onApplicationDidLoad;
+window.onbeforeunload = Arbiter.onApplicationDidUnload;
 
 
 // const pushURL = href => {

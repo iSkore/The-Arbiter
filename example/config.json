@@ -1,0 +1,33 @@
+{
+  "pagePath": "main",
+  "mainFile": "login",
+  "pages": [
+    {
+      "name": "home",
+      "title": "Website | Home",
+      "preload": false,
+      "data": null,
+      "preRender": "console.log( 'pre' )",
+      "onRender": "console.log( 'on' )",
+      "postRender": "console.log( 'post' )"
+    },
+    {
+      "name": "login",
+      "title": "Website | Login",
+      "preload": true,
+      "data": null,
+      "preRender": "console.log( 'pre' )",
+      "onRender": "console.log( 'on' )",
+      "postRender": "console.log( 'post' )"
+    },
+    {
+      "name": "test",
+      "title": "Website | Test",
+      "preload": true,
+      "data": null,
+      "preRender": "console.log( 'pre' )",
+      "onRender": "console.log( 'on' )",
+      "postRender": "console.log( 'post' )"
+    }
+  ]
+}
