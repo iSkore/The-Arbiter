@@ -1,6 +1,6 @@
 'use strict';
 
-class Library
+class Librarian
 {
     // TODO add local, session, and indexDB storage to this class
     // TODO save files and other things to this Library
@@ -13,7 +13,7 @@ class Library
         this.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
         this.IDBKeyRange    = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
-        this.DBRequest = this.indexedDB.open( 'Library', this.DBVersion );
+        this.DBRequest = this.indexedDB.open( 'Librarian', this.DBVersion );
 
         this.DBRequest.onerror = e => {
             console.warn( 'User does not allow IndexedDB', e.target.errorCode );

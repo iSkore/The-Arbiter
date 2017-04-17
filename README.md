@@ -373,9 +373,9 @@ Executes a string of code in a `container`.
 
 ------
 
-### The Library
+### The Librarian
 
-![library][4]
+![librarian][4]
 
 // TODO: Document this
 

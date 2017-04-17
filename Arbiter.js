@@ -1,13 +1,15 @@
 'use strict';
 
 const
-    Monitor = require( './Monitor' ),
-    Page    = require( './Page' ),
-    PubSub  = require( './PubSub' );
+    Monitor   = require( './Monitor' ),
+    Page      = require( './Page' ),
+    PubSub    = require( './PubSub' ),
+    Librarian = require( './Librarian' );
 
 // TODO save this to session storage
 // TODO create save and load function
 // TODO create on off variable for console.log debugging mode
+// TODO use librarian for loading of files
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
