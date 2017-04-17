@@ -1,3 +1,9 @@
+'use strict';
+
+const
+    Executor = require( './Executor' ),
+    PubSub   = require( './PubSub' );
+
 class Page
 {
     constructor( name, page, pagePath = 'main' )
@@ -6,36 +12,20 @@ class Page
         this.name       = page.name || page.title;
         this.path       = `${pagePath}/${name}.html`;
         this.html       = page.data || null;
-        this.preRender  = page.preRender || ( () => {} );
-        this.onRender   = page.onRender || ( () => {} );
-        this.postRender = page.postRender || ( () => {} );
-        this.preload    = page.preload || false;
+        this.preload    = page.preload;
         this.link       = page.link || null;
         this.isLoaded   = !!this.html;
         this.PubSub     = new PubSub( name );
+
+        this.setPreRender( page.preRender );
+        this.setOnRender( page.onRender );
+        this.setPostRender( page.postRender );
 
         if( this.html )
             this.isLoaded = true;
 
         if( this.link && this.isValidURL( this.link ) )
             this.path = this.link;
-
-        if( typeof this.preRender !== 'function' ) {
-            const js = this.preRender;
-            this.preRender = () => new Executor( js );
-        }
-
-        if( typeof this.onRender !== 'function' ) {
-            const js = this.onRender;
-            this.onRender = () => new Executor( js );
-        }
-
-        if( typeof this.postRender !== 'function' ) {
-            const js = this.postRender;
-            this.postRender = () => new Executor( js );
-        }
-
-        console.log( this );
 
         this.hasRendered = false;
 
@@ -61,6 +51,33 @@ class Page
         } );
     }
 
+    setFunctionType( fn )
+    {
+        if( !fn )
+            return ( () => {} );
+        if( typeof fn === 'string' )
+            return ( () => new Executor( fn ) );
+        else if( typeof fn === 'function' )
+            return fn;
+        else
+            return ( () => ( console.warn( 'PreRendering unknown type' ), fn ) );
+    }
+
+    setPreRender( fn )
+    {
+        this.preRender = this.setFunctionType( fn );
+    }
+
+    setOnRender( fn )
+    {
+        this.onRender = this.setFunctionType( fn );
+    }
+
+    setPostRender( fn )
+    {
+        this.postRender = this.setFunctionType( fn );
+    }
+
     isValidURL( str )
     {
         return new RegExp( '(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9]\.[^\s]{2,})', 'igm' ).test( str );
@@ -76,3 +93,5 @@ class Page
             obj.load( this.name, false );
     }
 }
+
+module.exports = Page;

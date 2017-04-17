@@ -1,6 +1,9 @@
+'use strict';
+
 class Monitor
 {
-    constructor()
+    // TODO: add "Machine Learning Page Loading" - if page is never clicked, don't preload it
+    constructor( debug )
     {
         this.canRun = true;
         this.isRunning = false;
@@ -77,3 +80,5 @@ class Monitor
         this.isRunning = false;
     }
 }
+
+module.exports = Monitor;

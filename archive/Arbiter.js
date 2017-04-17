@@ -1,19 +1,12 @@
-'use strict';
-
-const
-    Monitor = require( './Monitor' ),
-    Page    = require( './Page' ),
-    PubSub  = require( './PubSub' );
-
 class Arbiter extends Monitor
 {
     constructor( pages )
     {
         // TODO save this to session storage
         // TODO create save and load function
-        // TODO - √ - create pubsub
+        // TODO create pubsub
         // TODO create on off variable for console.log debugging mode
-        // TODO - √ - allow page pre, on, and post functions to be accessed and editable
+        // TODO allow page pre, on, and post functions to be accessed
 
         super();
 
@@ -142,62 +135,6 @@ class Arbiter extends Monitor
         return false;
     }
 
-    sessionSave( key, data )
-    {
-        Arbiter.sessionSave( key, data );
-    }
-
-    static sessionSave( key, data )
-    {
-        if( data !== ''+data )
-            data = JSON.stringify( data );
-
-        sessionStorage.setItem( key, data );
-    }
-
-    sessionLoad( key )
-    {
-        return Arbiter.sessionLoad( key );
-    }
-
-    static sessionLoad( key )
-    {
-        let data = sessionStorage.getItem( key );
-
-        try { data = JSON.parse( data ); }
-        catch( e ) {}
-
-        return data;
-    }
-
-    localSave( key, data )
-    {
-        Arbiter.localSave( key, data );
-    }
-
-    static localSave( key, data )
-    {
-        if( data !== ''+data )
-            data = JSON.stringify( data );
-
-        localStorage.setItem( key, data );
-    }
-
-    localLoad( key )
-    {
-        return Arbiter.localLoad( key );
-    }
-
-    static localLoad( key )
-    {
-        let data = localStorage.getItem( key );
-
-        try { data = JSON.parse( data ); }
-        catch( e ) {}
-
-        return data;
-    }
-
     keyToHash( hash )
     {
         return hash.startsWith( '#' ) ? hash : `#${hash}`;
@@ -251,25 +188,9 @@ class Arbiter extends Monitor
         }
     }
 
-    setPreRenderForPage( page, fn )
-    {
-        this.getPage( page ).setPreRender( fn );
-    }
-
-    setOnRenderForPage( page, fn )
-    {
-        this.getPage( page ).setOnRender( fn );
-    }
-
-    setPostRenderForPage( page, fn )
-    {
-        this.getPage( page ).setPostRender( fn );
-    }
-
     setMainFile( page )
     {
         this.config.mainFile = this.pageToHash( page );
-        this.localSave( 'arbiter', this );
     }
 
     addGlobalExecution( fn )
@@ -295,8 +216,6 @@ class Arbiter extends Monitor
 
     static onApplicationDidAppear()
     {
-        this.config.mainFile = Arbiter.sessionLoad( 'mainFile' );
-
         console.log( 'Application Did Appear' );
     }
 
@@ -323,7 +242,7 @@ class Arbiter extends Monitor
 
     static onApplicationDidUnload()
     {
-        Arbiter.sessionSave( 'mainFile', this.currentPage.name );
+        // TODO: internal unloading, saving analytics/state
         console.log( 'Application Did Unload' );
         return Arbiter.onApplicationDidDisappear();
     }
@@ -339,4 +258,85 @@ class Arbiter extends Monitor
     }
 }
 
-module.exports = Arbiter;
+// TODO: this will break if someone doesn't call it _a... ya we'll work on this...
+function locationHashChanged( e ) {
+    if( !_a.isPageRouted( location.hash ) ) {
+        console.warn( `${location.hash} is not managed by The Arbiter.` );
+        return;
+    }
+
+    if( !_a.hashToKey( location.hash ) || _a.currentPage === '' )
+        return;
+
+    if( _a.isPageRendered( location.hash ) )
+        return;
+
+    _a.load( location.hash, true, () => {
+        console.log( location.hash + ' loaded' );
+    } );
+
+    Arbiter.onLocationHashChanged( e );
+}
+
+function pageDidChange( e ) {
+    locationHashChanged( e );
+    Arbiter.onPageDidChange( e );
+}
+
+window.onhashchange   = locationHashChanged;
+window.addEventListener( 'popstate', pageDidChange );
+
+document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
+window.onload         = Arbiter.onApplicationDidLoad;
+window.onbeforeunload = Arbiter.onApplicationDidUnload;
+
+
+// const pushURL = href => {
+//     history.pushState( {}, '', href );
+//     window.dispatchEvent( new Event( 'popstate' ) );
+// };
+
+// prerenderPass: function() {
+//     const refs = $( 'a' );
+//
+//     refs.each( ( i, item ) => {
+//         if( !_c.util.isPageRouted( item.hash ) ) {
+//             if( item.hash ) {
+//                 const hash = _c.util.hashToKey( item.hash );
+//
+//                 if( _pages.pages.hasOwnProperty( hash ) )
+//                     _pages.pages[ hash ] = new Page( item.hash, true ).apply( _c );
+//
+//                 $( item ).mouseup( () => {
+//                     console.log( ":FUCIK" );
+//                     _c.load( item.hash );
+//                 }, false );
+//             }
+//         }
+//     } );
+// },
+// if( !_c.pages[ name ].isPrerendered ) {
+//     _c.pages[ name ].isPrerendered = true;
+//     _c.prerenderPass();
+// }
+
+// function require( file ) {
+//     const element = document.createElement( 'script' );
+//     element.src = file;
+//     document.body.appendChild( element );
+// }
+
+// $.ajax( {
+//     type: 'GET',
+//     url: this.routes[ name ]
+// } )
+// .done( res => {
+//     this.pages[ name ].data = res;
+//     this.pages[ name ].isLoaded = true;
+//
+//     if( render )
+//         this.render( this.pages[ name ] );
+//
+//     handler( res );
+// } )
+// .fail( rej => console.error( 'Error loading: ' + name, rej ) );

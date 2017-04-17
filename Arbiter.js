@@ -1,14 +1,23 @@
+'use strict';
+
+const
+    Monitor = require( './Monitor' ),
+    Page    = require( './Page' ),
+    PubSub  = require( './PubSub' );
+
 class Arbiter extends Monitor
 {
     constructor( pages )
     {
         // TODO save this to session storage
         // TODO create save and load function
-        // TODO create pubsub
         // TODO create on off variable for console.log debugging mode
-        // TODO allow page pre, on, and post functions to be accessed
+        // TODO - √ - create pubsub
+        // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
         super();
+
+        this.version = 'v0.0.4';
 
         this.routes = {};
 
@@ -20,16 +29,15 @@ class Arbiter extends Monitor
             return r;
         }, {} );
 
-        this.activePage = null;
         this.isReady = false;
 
         Object.defineProperty( this, 'currentPage', {
             get: () => {
-                return this.activePage;
+                return Arbiter.activePage;
             },
-            set: page => {
-                this.activePage = page;
-                this.analyze( page.name );
+            set: pageName => {
+                Arbiter.activePage = pageName;
+                this.analyze( pageName );
             }
         } );
     }
@@ -58,7 +66,10 @@ class Arbiter extends Monitor
 
         this.globalExecution.addSubscription( globalExecution );
 
-        this.load( this.config.mainFile, true, this.onApplicationIsReady );
+        if( !Arbiter.activePage )
+            Arbiter.activePage = this.config.mainFile;
+
+        this.load( Arbiter.activePage, true, this.onApplicationIsReady );
     }
 
     changePage( hash )
@@ -68,9 +79,10 @@ class Arbiter extends Monitor
 
     render( page )
     {
+        console.log( page );
         page.preRender();
 
-        this.currentPage = page;
+        this.currentPage = page.name;
         document.title   = page.title;
 
         if( location.hash !== `#${page.name}` )
@@ -78,13 +90,11 @@ class Arbiter extends Monitor
 
         Object.keys( this.pages ).map( page => this.pages[ page ].isRendered = false );
 
-        return (
-            this.container.html( page.data ),
-                page.onRender(),
-                page.isRendered = true,
-                this.publishForPage( page ),
-                this.invokeGlobalExecution()
-        );
+        this.container.html( page.data );
+        page.onRender();
+        page.isRendered = true;
+        this.publishForPage( page );
+        this.invokeGlobalExecution();
     }
 
     request( url )
@@ -135,13 +145,78 @@ class Arbiter extends Monitor
         return false;
     }
 
+    /**
+     * Session and Local Storage
+     */
+    // TODO move this function set to it's own class
+    sessionSave( key, data )
+    {
+        Arbiter.sessionSave( key, data );
+    }
+
+    static sessionSave( key, data )
+    {
+        if( data !== ''+data )
+            data = JSON.stringify( data );
+
+        sessionStorage.setItem( key, data );
+    }
+
+    sessionLoad( key )
+    {
+        return Arbiter.sessionLoad( key );
+    }
+
+    static sessionLoad( key )
+    {
+        let data = sessionStorage.getItem( key );
+
+        try { data = JSON.parse( data ); }
+        catch( e ) {}
+
+        return data;
+    }
+
+    localSave( key, data )
+    {
+        Arbiter.localSave( key, data );
+    }
+
+    static localSave( key, data )
+    {
+        if( data !== ''+data )
+            data = JSON.stringify( data );
+
+        localStorage.setItem( key, data );
+    }
+
+    localLoad( key )
+    {
+        return Arbiter.localLoad( key );
+    }
+
+    static localLoad( key )
+    {
+        let data = localStorage.getItem( key );
+
+        try { data = JSON.parse( data ); }
+        catch( e ) {}
+
+        return data;
+    }
+    /**
+     * End Session and Local Storage
+     */
+
     keyToHash( hash )
     {
+        hash = hash.trim();
         return hash.startsWith( '#' ) ? hash : `#${hash}`;
     }
 
     hashToKey( hash )
     {
+        hash = hash.trim();
         return hash.startsWith( '#' ) ? hash.substr( 1 ) : hash;
     }
 
@@ -188,6 +263,21 @@ class Arbiter extends Monitor
         }
     }
 
+    setPreRenderForPage( page, fn )
+    {
+        this.getPage( page ).setPreRender( fn );
+    }
+
+    setOnRenderForPage( page, fn )
+    {
+        this.getPage( page ).setOnRender( fn );
+    }
+
+    setPostRenderForPage( page, fn )
+    {
+        this.getPage( page ).setPostRender( fn );
+    }
+
     setMainFile( page )
     {
         this.config.mainFile = this.pageToHash( page );
@@ -213,130 +303,60 @@ class Arbiter extends Monitor
     {
         this.getPage( page ).PubSub.publish( event );
     }
-
-    static onApplicationDidAppear()
-    {
-        console.log( 'Application Did Appear' );
-    }
-
-    static onApplicationDidLoad()
-    {
-        console.log( 'Application Did Load' );
-    }
-
-    static onApplicationIsReady()
-    {
-        console.log( 'Application Is Ready' );
-    }
-
-    static onPageDidChange( e )
-    {
-        console.log( 'Page Did Change' );
-    }
-
-    static onLocationHashChanged( e )
-    {
-        // TODO: put location change in static space
-        console.log( 'Hash Did Change' );
-    }
-
-    static onApplicationDidUnload()
-    {
-        // TODO: internal unloading, saving analytics/state
-        console.log( 'Application Did Unload' );
-        return Arbiter.onApplicationDidDisappear();
-    }
-
-    static onApplicationDidDisappear()
-    {
-        console.log( 'Application Did Disappear' );
-    }
-
-    static onApplicationDidReceiveMemoryWarning()
-    {
-        console.log( 'Application Did Receive Memory Warning' );
-    }
 }
 
-// TODO: this will break if someone doesn't call it _a... ya we'll work on this...
-function locationHashChanged( e ) {
-    if( !_a.isPageRouted( location.hash ) ) {
-        console.warn( `${location.hash} is not managed by The Arbiter.` );
-        return;
-    }
+Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
-    if( !_a.hashToKey( location.hash ) || _a.currentPage === '' )
-        return;
+Arbiter.onApplicationDidAppear = function() {
+    if( !Arbiter.activePage )
+        Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
-    if( _a.isPageRendered( location.hash ) )
-        return;
-
-    _a.load( location.hash, true, () => {
-        console.log( location.hash + ' loaded' );
-    } );
-
-    Arbiter.onLocationHashChanged( e );
-}
-
-function pageDidChange( e ) {
-    locationHashChanged( e );
-    Arbiter.onPageDidChange( e );
-}
-
-window.onhashchange   = locationHashChanged;
-window.addEventListener( 'popstate', pageDidChange );
-
-document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
-window.onload         = Arbiter.onApplicationDidLoad;
-window.onbeforeunload = Arbiter.onApplicationDidUnload;
+    console.log( 'Application Did Appear' );
+};
 
 
-// const pushURL = href => {
-//     history.pushState( {}, '', href );
-//     window.dispatchEvent( new Event( 'popstate' ) );
-// };
+Arbiter.onApplicationDidLoad = function() {
+    console.log( 'Application Did Load' );
+};
 
-// prerenderPass: function() {
-//     const refs = $( 'a' );
-//
-//     refs.each( ( i, item ) => {
-//         if( !_c.util.isPageRouted( item.hash ) ) {
-//             if( item.hash ) {
-//                 const hash = _c.util.hashToKey( item.hash );
-//
-//                 if( _pages.pages.hasOwnProperty( hash ) )
-//                     _pages.pages[ hash ] = new Page( item.hash, true ).apply( _c );
-//
-//                 $( item ).mouseup( () => {
-//                     console.log( ":FUCIK" );
-//                     _c.load( item.hash );
-//                 }, false );
-//             }
-//         }
-//     } );
-// },
-// if( !_c.pages[ name ].isPrerendered ) {
-//     _c.pages[ name ].isPrerendered = true;
-//     _c.prerenderPass();
-// }
 
-// function require( file ) {
-//     const element = document.createElement( 'script' );
-//     element.src = file;
-//     document.body.appendChild( element );
-// }
+Arbiter.onApplicationIsReady = function() {
+    console.log( 'Application Is Ready' );
+};
 
-// $.ajax( {
-//     type: 'GET',
-//     url: this.routes[ name ]
-// } )
-// .done( res => {
-//     this.pages[ name ].data = res;
-//     this.pages[ name ].isLoaded = true;
-//
-//     if( render )
-//         this.render( this.pages[ name ] );
-//
-//     handler( res );
-// } )
-// .fail( rej => console.error( 'Error loading: ' + name, rej ) );
+
+Arbiter.onPageDidChange = function( e ) {
+    console.log( 'Page Did Change' );
+};
+
+
+Arbiter.onLocationHashChanged = function( e ) {
+    // TODO: put location change in static space
+    console.log( 'Hash Did Change' );
+};
+
+Arbiter.saveOnUnload = function() {
+    console.log( 'Saving:', Arbiter.activePage );
+    Arbiter.sessionSave( 'activePage', Arbiter.activePage );
+    window.onbeforeunload = null;
+};
+
+Arbiter.onApplicationDidUnload = function() {
+    console.log( 'Application Did Unload' );
+
+    setTimeout( Arbiter.saveOnUnload, 0 );
+
+    return Arbiter.onApplicationDidDisappear();
+};
+
+
+Arbiter.onApplicationDidDisappear = function() {
+    console.log( 'Application Did Disappear' );
+};
+
+
+Arbiter.onApplicationDidReceiveMemoryWarning = function() {
+    console.log( 'Application Did Receive Memory Warning' );
+};
+
+module.exports = Arbiter;

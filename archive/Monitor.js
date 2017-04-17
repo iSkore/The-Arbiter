@@ -1,10 +1,7 @@
-'use strict';
-
 class Monitor
 {
-    constructor( debug )
+    constructor()
     {
-
         this.canRun = true;
         this.isRunning = false;
         this.views = [];
@@ -80,5 +77,3 @@ class Monitor
         this.isRunning = false;
     }
 }
-
-module.exports = Monitor;

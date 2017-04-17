@@ -10,18 +10,38 @@ Custom page-specific rendering can be done in one of three states: `preRender`, 
 
 ### Installation:
 
-```html
-<script type="text/javascript" src="includes/js/Generator.js"></script>
-<script type="text/javascript" src="includes/js/Executor.js"></script>
-<script type="text/javascript" src="includes/js/Page.js"></script>
-<script type="text/javascript" src="includes/js/PubSub.js"></script>
-<script type="text/javascript" src="includes/js/Monitor.js"></script>
-<script type="text/javascript" src="includes/js/Arbiter.js"></script>
-```
+`npm install the-arbiter`
 
 ------
 
 ### Set up and config
+
+**Set up**
+
+If you are using `gulp` in conjuction with this module, place the following code in your `global.js` file.
+
+```
+function locationHashChanged( e ) {
+    if( !_a.isPageRouted( location.hash ) ) return;
+    if( !_a.hashToKey( location.hash ) || _a.currentPage === '' ) return;
+    if( _a.isPageRendered( location.hash ) ) return;
+    _a.load( location.hash, true, () => console.log( location.hash + ' loaded' ) );
+    Arbiter.onLocationHashChanged( e );
+}
+
+function pageDidChange( e ) {
+    locationHashChanged( e );
+    Arbiter.onPageDidChange( e );
+}
+
+window.onhashchange   = locationHashChanged;
+window.addEventListener( 'popstate', pageDidChange );
+document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
+window.onload         = Arbiter.onApplicationDidLoad;
+window.onbeforeunload = Arbiter.onApplicationDidUnload;
+```
+
+**Configuration**
 
 ```javascript
 const
@@ -40,6 +60,7 @@ const
             }
         ]
     },
+    Arbiter = require( 'the-arbiter' ),
     _a = new Arbiter( _pages );
 
 _a.init();

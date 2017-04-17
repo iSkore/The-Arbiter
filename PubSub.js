@@ -1,3 +1,5 @@
+'use strict';
+
 class PubSub
 {
     constructor( name, subscribers = [] )
@@ -22,3 +24,5 @@ class PubSub
             this.subscribers[ i ]( event );
     }
 }
+
+module.exports = PubSub;

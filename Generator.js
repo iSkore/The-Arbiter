@@ -1,3 +1,5 @@
+'use strict';
+
 function generator( gen ) {
     const
         ctx = this,
@@ -135,3 +137,5 @@ function isGeneratorFunction( obj ) {
 function isObject( obj ) {
     return Object == obj.constructor;
 }
+
+module.exports = generator;

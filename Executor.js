@@ -1,6 +1,10 @@
+'use strict';
+
+const generator = require( './Generator' );
+
 class Executor
 {
-    constructor( js )
+    constructor( js, immediateExecution = true )
     {
         this.js = js;
         this.exec = generator.container( function * ( code ) {
@@ -14,22 +18,21 @@ class Executor
             } );
         } );
 
-        this.exec( this.js )
-            .then(
-                ( ...args ) => this.success( args ),
-                e => this.error( e.stack )
-            );
+        if( immediateExecution )
+            this.exec( this.js )
+                .then(
+                    ( ...args ) => this.success( args ),
+                    e => this.error( e.stack )
+                );
     }
 
-    success( data )
-    {
-        console.log( 'Run Complete - Success', data );
+    success( data ) {
+        this.success = data;
     }
 
-    error( data )
-    {
-        console.log( 'Run Complete - Failed', data );
-        this.end();
-        this.stop();
+    error( data ) {
+        this.error = data;
     }
 }
+
+module.exports = Executor;
