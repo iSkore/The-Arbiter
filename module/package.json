@@ -1,0 +1,28 @@
+{
+  "name": "the-arbiter",
+  "version": "0.0.2",
+  "description": "The Arbiter is a HTML routing and analytics system for front-end applications and websites.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iSkore/the-arbiter.git"
+  },
+  "keywords": [
+    "manager",
+    "arbiter",
+    "front-end",
+    "development"
+  ],
+  "author": "Parellin Technologies LLC",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iSkore/the-arbiter/issues"
+  },
+  "homepage": "https://github.com/iSkore/the-arbiter#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  }
+}
