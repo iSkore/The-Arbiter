@@ -106,46 +106,167 @@ _a.init();
 Manages page routing, monitoring, and lifecycle.
 
 - `constructor`
-    - Arguments: nothing
+    - Arguments: `none`
     - Sets up routes, pages, and `currentPage`
 
 - `init`
-    - Arguments: nothing
+    - Arguments:
+        - `(function) fn: function to run on initialization`
+        - `(function) globalExecution: add globally executed function`
     - Gets the `body` container - modify this to call another `div` if you have a permanent navigation bar or something like that
     - Constructs the pages
     - Loads the `mainFile` and calls `onApplicationIsReady`
 
 - `render`
-    - Arguments: `Page object`
+    - Arguments:
+        - `(Page) page`
     - Calls `preRender`, `onRender`, and `postRender` in their respective order
     - Sets `currentPage`
-    - Sets `document.title` and `location.hash`
+    - Sets `document.title` and `location.hash` based on `page` object
     - Sends page data to the render container
 
 - `request`
-    - Arguments: `(string) url`
+    - Arguments:
+        - `(string) url`
     - Loads the html page - can be used to load any http page
 
 - `load`
-    - Arguments: `(string) name of the page, (bool) render it?, (function) callback`
+    - Arguments:
+        - `(string) name`: name of the page
+        - `(bool) render`: set render page flag
+        - `(function) handler`: optional call back
     - Renders a page if it is loaded into memory, otherwise, `request`'s it, stores it, and then calls `render`
     - Responses with the `XMLHttpRequest` on `readyState 4`
 
+- `changePage`
+    - Arguments:
+        - `(string) hash`
+    - **Primary navigation function**
+    - Changes page location to the desired page - notifies `Arbiter.onLocationHashChanged`
+
 - `hashToKey`
-    - Arguments: `(string) hash`
+    - Arguments:
+        - `(string) hash`
     - Removes `#` in `location.hash` URI component and returns result
 
+- `hashToKey`
+    - Arguments:
+        - `(string) hash`
+    - Adds `#` for `location.hash` URI component and returns result
+
 - `isPageRouted`
-    - Arguments: `(string) hash`
+    - Arguments:
+        - `(string) hash`
     - Returns if(?) the page is routed and managed by The Arbiter
 
 - `isPageLoaded`
-    - Arguments: `(string) hash`
+    - Arguments:
+        - `(string) hash`
     - Returns if(?) the page has been loaded into memory
 
 - `isPageRendered`
-    - Arguments: `(string) hash`
+    - Arguments:
+        - `(string) hash`
     - Returns if(?) the page is currently rendered
+
+- `isPage`
+    - Arguments:
+        - `(Page) page`
+    - Returns if(?) `page` is an instance of `Page`
+
+- `pageToHash`
+    - Arguments:
+        - `(Page | string) page`
+    - Returns `hash` of a page or string
+
+- `getPage`
+    - Arguments:
+        - `(Page | string) page`
+    - Returns a `Page` from a `hash`, `key`, or `Page`
+
+- `setPreRenderForPage`
+    - Arguments:
+        - `(Page | string) page`
+        - `(function) fn`
+    - Sets the `PreRender` function for a specific page
+
+- `setOnRenderForPage`
+    - Arguments:
+        - `(Page | string) page`
+        - `(function) fn`
+    - Sets the `OnRender` function for a specific page
+
+- `setPostRenderForPage`
+    - Arguments:
+        - `(Page | string) page`
+        - `(function) fn`
+    - Sets the `PostRender` function for a specific page
+
+- `setMainFile`
+    - Arguments:
+        - `(string) page`
+    - Sets the `mainFile` on in-memory configuation
+    - Example use: After a user logs in, set the main page from `login` to `dashboard`
+
+- `addGlobalExecution`
+    - Arguments:
+        - `(function) fn`
+    - Subscribes a function to the `globalExecution` pubsub (see below)
+
+- `invokeGlobalExecution`
+    - Arguments:
+        - `(ANY) event`
+    - Publishes anything to all subscribers of `globalExecution`
+
+- `subscribeToPage`
+    - Arguments:
+        - `(Page | string) page`
+        - `(function) fn`
+    - Subscribes a function to a specified `Page`
+
+- `publishForPage`
+    - Arguments:
+        - `(Page | string) page`
+        - `(AND) event`
+    - Publishes anything to all subscribers of a specified `Page`
+    
+##### Static Methods
+
+- `onApplicationDidAppear`
+    - Called immediately when URL for website is requested
+
+- `onApplicationDidLoad`
+    - Called when DOM/`document` is ready
+
+- `onApplicationIsReady`
+    - Called when The Arbiter is prepared
+
+- `onPageDidChange`
+    - Called on page history change
+        - `refresh`, `forward`, `backward`
+
+- `onLocationHashChanged`
+    - Called when `location.hash` is changed
+
+- `onApplicationDidUnload`
+    - Called when the tab is set to close or the URL changes
+
+- `onApplicationDidDisappear`
+    - Called just before the application closes
+    - Volatile code execution will occur, not _really_ to be used
+
+- `onApplicationDidReceiveMemoryWarning`
+    - Called if The Monitor detects a memory issue
+    - Clears out large in-memory objects
+
+##### Important methods/variables
+
+- `globalExecution`
+    - Global Execution is a Post-Render function or multiple functions that are run globally and have no ties to a specific page.
+
+- `saveOnUnload`
+    - Attempts to save the state of the application before fully unloading
+    - Returns `onApplicationDidDisappear` - if changed to return a `(string)` a warning box will appear and block all code execution
 
 ------
 
@@ -156,7 +277,7 @@ Manages page routing, monitoring, and lifecycle.
 Monitors memory, page duration, and activity.
 
 - `constructor`
-    - Arguments: nothing
+    - Arguments: `none`
     - Sets up monitoring
 
 - `analyze`
@@ -165,15 +286,15 @@ Monitors memory, page duration, and activity.
     - Checks and reports on memory usage
 
 - `onMemoryWarning`
-    - Arguments: nothing
+    - Arguments: `none`
     - Manual override memory warning to stop the monitor from running
 
 - `inquiry`
-    - Arguments: nothing
+    - Arguments: `none`
     - Returns the current list of page analytics
 
 - `start`
-    - Arguments: nothing
+    - Arguments: `none`
     - Starts a "timer" for the currently rendered page
 
 - `stop`
@@ -250,8 +371,46 @@ Executes a string of code in a `container`.
 - `error`
     - Called if things aren't OK
 
+------
+
+### The Library
+
+![library][4]
+
+// TODO: Document this
+
+------
+
+### PubSub
+
+**`PubSub`** is a Publish-Subscribe class to register functions to a specific event.
+
+- `constructor`
+    - Arguments:
+        - `(string) name` of "topic"
+        - `(array) subscribers` List of subscribers
+
+- `isFunction`
+    - Arguments:
+        - `(ANY) fn`
+    - Returns if(?) `fn` is a `function`
+
+- `addSubscription`
+    - Arguments:
+        - `(function) fn`
+    - Adds function to list of `subscribers`
+
+- `listSubscribers`
+    - Arguments: `none`
+    - Returns the list of `subscribers`
+
+- `publish`
+    - Arguments:
+        - `(ANY) event`
+    - Invokes all subscribed functions and passes `event` 
 
 [0]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/arbiter.png "The Arbiter"
 [1]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/monitor.png "The Monitor"
 [2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/generator.png "The Generator"
 [3]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/executor.png "The Executor"
+[4]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/librarian.png "The Librarian"

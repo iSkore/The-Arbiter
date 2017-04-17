@@ -4,10 +4,12 @@ const
     Executor = require( './Executor' ),
     PubSub   = require( './PubSub' );
 
-class Page
+class Page extends PubSub
 {
     constructor( name, page, pagePath = 'main' )
     {
+        super( name );
+
         this.title      = page.title || page.name || name || '';
         this.name       = page.name || page.title;
         this.path       = `${pagePath}/${name}.html`;
@@ -15,7 +17,6 @@ class Page
         this.preload    = page.preload;
         this.link       = page.link || null;
         this.isLoaded   = !!this.html;
-        this.PubSub     = new PubSub( name );
 
         this.setPreRender( page.preRender );
         this.setOnRender( page.onRender );

@@ -8,9 +8,17 @@ class PubSub
         this.subscribers = subscribers;
     }
 
+    isFunction( fn )
+    {
+        return typeof fn === 'function';
+    }
+
     addSubscription( fn )
     {
-        this.subscribers.push( fn );
+        if( this.isFunction( fn ) )
+            this.subscribers.push( fn );
+        else
+            throw 'Argument Error - [fn] must be a function.';
     }
 
     listSubscribers()
