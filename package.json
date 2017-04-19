@@ -1,11 +1,11 @@
 {
   "name": "the-arbiter",
-  "version": "0.0.6",
+  "version": "0.0.4",
   "description": "The Arbiter is a HTML routing and analytics system for front-end applications and websites.",
   "main": "index.js",
   "scripts": {
     "test": "npm test",
-    "vup": "git add . && git commit -m \"version patch\" && npm version patch -m \"v %s\" && git push --all"
+    "vup": "git add . && git commit -m \"version patch\" && git push && git push --tags && npm version patch -m \"v %s\""
   },
   "repository": {
     "type": "git",
