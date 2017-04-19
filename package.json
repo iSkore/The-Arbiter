@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm test",
-    "vup": "git add . && git commit -m \"version patch\" && npm version patch -m \"v %s\" && git push --all"
+    "vup": "git add . && git commit -m 'v %s' && npm version patch -m \"v %s\" && git push --all"
   },
   "repository": {
     "type": "git",
