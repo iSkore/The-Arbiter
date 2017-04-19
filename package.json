@@ -4,8 +4,7 @@
   "description": "The Arbiter is a HTML routing and analytics system for front-end applications and websites.",
   "main": "index.js",
   "scripts": {
-    "test": "npm test",
-    "vup": "git add . && git commit -m 'v %s' && npm version patch -m \"v %s\" && git push --all"
+    "test": "npm test"
   },
   "repository": {
     "type": "git",
