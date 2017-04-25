@@ -3,7 +3,7 @@
 The Arbiter is a HTML routing and analytics system for front-end applications and websites.
 (based on ExpressJS Route handling and React-like loading - for front-end only)
 
-The Arbiter preloads pages into memory and swaps pages into a container. This **significantly** increases render time and page navigation.
+The Arbiter preloads pages into memory and swaps pages into a container. This **significantly** decreases render time and page navigation.
 Custom page-specific rendering can be done in one of three states: `preRender`, `onRender`, `postRender`.
 
 ------
