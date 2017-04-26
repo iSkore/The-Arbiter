@@ -1,25 +1,30 @@
 'use strict';
 
 const
-    Monitor   = require( './Monitor' ),
-    Page      = require( './Page' ),
-    PubSub    = require( './PubSub' ),
-    Librarian = require( './Librarian' );
+    Cleansing   = require( './Cleansing' ),
+    Monitor     = require( './Monitor' ),
+    Page        = require( './Page' ),
+    PubSub      = require( './PubSub' ),
+    Librarian   = require( './Librarian' ),
+    { version } = require( './package.json' );
 
 // TODO save this to session storage
 // TODO create save and load function
 // TODO create on off variable for console.log debugging mode
 // TODO use librarian for loading of files
+
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
-class Arbiter extends Monitor
+class Arbiter extends Cleansing
 {
     constructor( pages )
     {
         super();
 
-        this.version = 'v0.0.4';
+        this.monitor = new Monitor();
+
+        this.version = version;
 
         this.routes = {};
 
@@ -39,7 +44,7 @@ class Arbiter extends Monitor
             },
             set: pageName => {
                 Arbiter.activePage = pageName;
-                this.analyze( pageName );
+                this.monitor.analyze( pageName );
             }
         } );
     }
@@ -308,6 +313,8 @@ class Arbiter extends Monitor
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 Arbiter.onApplicationDidAppear = function() {
+    Cleansing();
+
     if( !Arbiter.activePage )
         Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 

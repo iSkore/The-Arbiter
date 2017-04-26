@@ -6,6 +6,7 @@ class Monitor
     constructor( debug )
     {
         this.canRun = true;
+        this.canMonitorMemory = ( Arbiter.window.hasOwnProperty( 'performance' ) );
         this.isRunning = false;
         this.views = [];
         this.startTime = null;
@@ -14,17 +15,26 @@ class Monitor
 
     analyze( name )
     {
-        if( !this.canRun ) return;
+        if( !this.canMonitorMemory ) {
+            if( this.isRunning )
+                this.stop();
+
+            if( this.canRun )
+                return this.start();
+        }
 
         this.navigatedTo = name;
+
         if( this.isRunning )
             this.stop();
 
-        this.memoryUsage = +( ( performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit ) * 100 ).toFixed( 3 );
+        this.memoryUsage = +(
+            ( Arbiter.window.performance.memory.usedJSHeapSize / Arbiter.window.performance.memory.jsHeapSizeLimit ) * 100
+        ).toFixed( 3 );
 
-        if( this.memoryUsage >= 80 ) {
+        if( this.memoryUsage >= 80 )
             this.onMemoryWarning( 'Analyze will not run due to memory issue.' );
-        } else
+        else
             this.start();
     }
 
@@ -32,6 +42,7 @@ class Monitor
     {
         this.stop();
         this.canRun = false;
+        this.canMonitorMemory = false;
         this.onApplicationDidReceiveMemoryWarning( e );
     }
 
@@ -70,7 +81,7 @@ class Monitor
             memoryUsage: this.memoryUsage
         } );
 
-        sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
+        Arbiter.window.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
 
         this.navigatedTo = null;
         this.page = null;
