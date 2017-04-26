@@ -51,7 +51,7 @@ class Arbiter
         fn = fn || ( () => {} );
         this.container = $( 'body' );
 
-        this.monitor = new Monitor( this );
+        this.monitor = new Monitor();
 
         Object.keys( this.pages ).map(
             item => new Page(

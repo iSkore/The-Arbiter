@@ -45,7 +45,7 @@ class Monitor
         if( this.memoryUsage >= 80 )
             this.onMemoryWarning( 'Analyze will not run due to memory issue.' );
         else
-            this.start();
+            this.start( name );
     }
 
     onMemoryWarning( e )
@@ -66,10 +66,10 @@ class Monitor
         return this.views;
     }
 
-    start()
+    start( page )
     {
         if( !this.canRun ) return;
-        this.page = this.currentPage;
+        this.page = page;
         this.viewTime = new Date();
         this.startTime = this.performance.now();
         this.isRunning = true;
@@ -83,7 +83,7 @@ class Monitor
         const viewDuration = ( this.stopTime - this.startTime );
 
         this.views.push( {
-            page: this.page.name || this.page,
+            page: this.page,
             navigatedTo: this.navigatedTo,
             viewDuration,
             viewTime: this.viewTime,
