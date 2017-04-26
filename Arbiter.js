@@ -1,31 +1,34 @@
 'use strict';
 
 const
-    Monitor   = require( './Monitor' ),
-    Page      = require( './Page' ),
-    PubSub    = require( './PubSub' ),
-    Librarian = require( './Librarian' );
+    Monitor     = require( './Monitor' ),
+    Page        = require( './Page' ),
+    PubSub      = require( './PubSub' ),
+    Librarian   = require( './Librarian' ),
+    { version } = require( './package.json' );
 
-// TODO save this to session storage
-// TODO create save and load function
-// TODO create on off variable for console.log debugging mode
-// TODO use librarian for loading of files
+// TODO - save this to session storage
+// TODO - create save and load function
+// TODO - create on off variable for console.log debugging mode
+// TODO - use librarian for loading of files
+// TODO - document the fact that the Monitor has to call this.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
+// TODO - OR find a good place to put in saving Monitor stats to sessionStorage
+
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
-class Arbiter extends Monitor
+class Arbiter
 {
     constructor( pages )
     {
-        super();
-
-        this.version = 'v0.0.4';
+        this.version = version;
 
         this.routes = {};
 
         this.globalExecution = new PubSub();
 
         this.config = pages;
+
         this.pages = pages.pages.reduce( ( r, page ) => {
             r[ page.name ] = page;
             return r;
@@ -39,20 +42,33 @@ class Arbiter extends Monitor
             },
             set: pageName => {
                 Arbiter.activePage = pageName;
-                this.analyze( pageName );
+                this.monitor.analyze( pageName );
             }
         } );
     }
 
-    /**
-     * init
-     * @param fn - run function on initialization
-     * @param globalExecution - add function to globalExecution
-     */
-    init( fn = () => {}, globalExecution = () => {} )
+    init( fn, globalExecution = () => {} )
     {
         fn = fn || ( () => {} );
         this.container = $( 'body' );
+
+        this.species = {
+            isAndroid: /Android/.test( navigator.userAgent ),
+            isCordova: !!window.cordova,
+            isEdge: /Edge/.test( navigator.userAgent ),
+            isFirefox: /Firefox/.test( navigator.userAgent ),
+            isChrome: /Google Inc/.test( navigator.vendor ),
+            isChromeIOS: /CriOS/.test( navigator.userAgent ),
+            isChromiumBased: !!window.chrome && !/Edge/.test( navigator.userAgent ),
+            isIE: /Trident/.test( navigator.userAgent ),
+            isIOS: /(iPhone|iPad|iPod)/.test( navigator.platform ),
+            isOpera: /OPR/.test( navigator.userAgent ),
+            isSafari: /Safari/.test( navigator.userAgent ) && !/Chrome/.test( navigator.userAgent ),
+            isTouchScreen: ( 'ontouchstart' in window ) || window.DocumentTouch && document instanceof DocumentTouch,
+            isWebComponentsSupported: 'registerElement' in document && 'import' in document.createElement( 'link' ) && 'content' in document.createElement( 'template' )
+        };
+
+        this.monitor = new Monitor( this.species );
 
         Object.keys( this.pages ).map(
             item => new Page(
@@ -141,13 +157,22 @@ class Arbiter extends Monitor
         return false;
     }
 
+    containment( fn, cb = () => {} ) {
+        try {
+            const tried = fn();
+            cb( tried );
+        } catch( e ) {
+            cb( e );
+        }
+    }
+
     changePage( hash )
     {
         location.hash = this.keyToHash( hash );
     }
 
     /**
-     * Session and Local Storage
+     * Session Storage
      */
     // TODO move this function set to it's own class
     sessionSave( key, data )
@@ -160,7 +185,7 @@ class Arbiter extends Monitor
         if( data !== ''+data )
             data = JSON.stringify( data );
 
-        sessionStorage.setItem( key, data );
+        Arbiter.sessionStorage.setItem( key, data );
     }
 
     sessionLoad( key )
@@ -170,35 +195,7 @@ class Arbiter extends Monitor
 
     static sessionLoad( key )
     {
-        let data = sessionStorage.getItem( key );
-
-        try { data = JSON.parse( data ); }
-        catch( e ) {}
-
-        return data;
-    }
-
-    localSave( key, data )
-    {
-        Arbiter.localSave( key, data );
-    }
-
-    static localSave( key, data )
-    {
-        if( data !== ''+data )
-            data = JSON.stringify( data );
-
-        localStorage.setItem( key, data );
-    }
-
-    localLoad( key )
-    {
-        return Arbiter.localLoad( key );
-    }
-
-    static localLoad( key )
-    {
-        let data = localStorage.getItem( key );
+        let data = Arbiter.sessionStorage.getItem( key );
 
         try { data = JSON.parse( data ); }
         catch( e ) {}
@@ -206,7 +203,7 @@ class Arbiter extends Monitor
         return data;
     }
     /**
-     * End Session and Local Storage
+     * End Session Storage
      */
 
     keyToHash( hash )
@@ -305,6 +302,64 @@ class Arbiter extends Monitor
     }
 }
 
+Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globalStorage || {
+    length: 0,
+    setItem: function( key, value ) {
+        document.cookie = key + '=' + value + '; path=/';
+        this.length++;
+    },
+    getItem: function( key ) {
+        const
+            keyEQ = key + '=',
+            ca = document.cookie.split( ';' );
+
+        for( let i = 0; i < ca.length; i++ ) {
+            let c = ca[ i ];
+            while( c.charAt( 0 ) === ' ' )
+                c = c.substring( 1, c.length );
+            if( c.indexOf( keyEQ ) === 0 )
+                return c.substring( keyEQ.length, c.length );
+        }
+
+        return null;
+    },
+    removeItem: function( key ) {
+        this.setItem( key, '', -1 );
+        this.length--;
+    },
+    clear: function() {
+        const ca = document.cookie.split( ';' );
+
+        for( let i = 0; i < ca.length; i++ ) {
+            let c = ca[ i ];
+            while( c.charAt( 0 ) === ' ' )
+                c = c.substring( 1, c.length );
+
+            const key = c.substring( 0, c.indexOf( '=' ) );
+
+            this.removeItem( key );
+        }
+
+        this.length = 0;
+    },
+    key: function( n ) {
+        const ca = document.cookie.split( ';' );
+        if( n >= ca.length || isNaN( parseFloat( n ) ) || !isFinite( n ) )
+            return null;
+
+        let c = ca[ n ];
+
+        while( c.charAt( 0 ) === ' ' )
+            c = c.substring( 1, c.length );
+
+        return c.substring( 0, c.indexOf( '=' ) );
+    }
+};
+
+Arbiter.indexedDB      = indexedDB || window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+Arbiter.IDBTransaction = IDBTransaction || window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
+Arbiter.IDBKeyRange    = IDBKeyRange || window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 Arbiter.onApplicationDidAppear = function() {
@@ -336,7 +391,6 @@ Arbiter.onLocationHashChanged = function( e ) {
 };
 
 Arbiter.saveOnUnload = function() {
-    console.log( 'Saving:', Arbiter.activePage );
     Arbiter.sessionSave( 'activePage', Arbiter.activePage );
     window.onbeforeunload = null;
 };
@@ -348,7 +402,6 @@ Arbiter.onApplicationDidUnload = function() {
 
     return Arbiter.onApplicationDidDisappear();
 };
-
 
 Arbiter.onApplicationDidDisappear = function() {
     console.log( 'Application Did Disappear' );

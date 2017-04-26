@@ -3,9 +3,26 @@
 class Monitor
 {
     // TODO: add "Machine Learning Page Loading" - if page is never clicked, don't preload it
-    constructor( debug )
+    constructor( species )
     {
+        this.species = species;
+
+        this.performance = performance || window.performance || {
+                memory: {
+                    usedJSHeapSize: 0,
+                    jsHeapSizeLimit: 0,
+                    totalJSHeapSize: 0
+                },
+                offset: Date.now(),
+                now: () => {
+                    const take = this.performance.offset;
+                    this.performance.offset = Date.now();
+                    return Date.now() - take;
+                }
+            };
+
         this.canRun = true;
+        this.canMonitorMemory = this.species.isChrome;
         this.isRunning = false;
         this.views = [];
         this.startTime = null;
@@ -14,24 +31,26 @@ class Monitor
 
     analyze( name )
     {
-        if( !this.canRun ) return;
-
         this.navigatedTo = name;
+
+        this.memoryUsage = this.canMonitorMemory ?
+                            +( ( this.performance.memory.usedJSHeapSize / this.performance.memory.jsHeapSizeLimit ) * 100 ).toFixed( 3 ) :
+                            0;
+
+        if( this.memoryUsage >= 80 )
+            this.onMemoryWarning( 'Analyze will not run due to memory issue.' );
+
         if( this.isRunning )
             this.stop();
 
-        this.memoryUsage = +( ( performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit ) * 100 ).toFixed( 3 );
-
-        if( this.memoryUsage >= 80 ) {
-            this.onMemoryWarning( 'Analyze will not run due to memory issue.' );
-        } else
-            this.start();
+        this.start( name );
     }
 
     onMemoryWarning( e )
     {
         this.stop();
         this.canRun = false;
+        this.canMonitorMemory = false;
         this.onApplicationDidReceiveMemoryWarning( e );
     }
 
@@ -45,32 +64,30 @@ class Monitor
         return this.views;
     }
 
-    start()
+    start( page )
     {
         if( !this.canRun ) return;
-        this.page = this.currentPage;
+        this.page = page;
         this.viewTime = new Date();
-        this.startTime = performance.now();
+        this.startTime = Date.now();
         this.isRunning = true;
     }
 
     stop()
     {
         if( !this.canRun ) return;
-        this.stopTime = performance.now();
+        this.stopTime = Date.now();
 
         const viewDuration = ( this.stopTime - this.startTime );
 
         this.views.push( {
-            page: this.page.name || this.page,
+            page: this.page,
             navigatedTo: this.navigatedTo,
             viewDuration,
             viewTime: this.viewTime,
             viewed: ( viewDuration >= 1000 ) ? `${( viewDuration / 1000 ).toFixed( 3 )} s` : `${viewDuration.toFixed( 3 )} ms`,
             memoryUsage: this.memoryUsage
         } );
-
-        sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
 
         this.navigatedTo = null;
         this.page = null;

@@ -9,9 +9,9 @@ class Librarian
     {
         this.DB             = null;
         this.DBVersion      = dbv;
-        this.indexedDB      = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-        this.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
-        this.IDBKeyRange    = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+        this.indexedDB      = window.indexedDB;
+        this.IDBTransaction = window.IDBTransaction;
+        this.IDBKeyRange    = window.IDBKeyRange;
 
         this.DBRequest = this.indexedDB.open( 'Librarian', this.DBVersion );
 
@@ -25,3 +25,5 @@ class Librarian
         };
     }
 }
+
+module.exports = Librarian;
