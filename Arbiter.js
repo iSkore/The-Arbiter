@@ -28,6 +28,7 @@ class Arbiter
         this.globalExecution = new PubSub();
 
         this.config = pages;
+
         this.pages = pages.pages.reduce( ( r, page ) => {
             r[ page.name ] = page;
             return r;
@@ -46,12 +47,28 @@ class Arbiter
         } );
     }
 
-    init( fn = () => {}, globalExecution = () => {} )
+    init( fn, globalExecution = () => {} )
     {
         fn = fn || ( () => {} );
         this.container = $( 'body' );
 
-        this.monitor = new Monitor();
+        this.species = {
+            isAndroid: /Android/.test( navigator.userAgent ),
+            isCordova: !!window.cordova,
+            isEdge: /Edge/.test( navigator.userAgent ),
+            isFirefox: /Firefox/.test( navigator.userAgent ),
+            isChrome: /Google Inc/.test( navigator.vendor ),
+            isChromeIOS: /CriOS/.test( navigator.userAgent ),
+            isChromiumBased: !!window.chrome && !/Edge/.test( navigator.userAgent ),
+            isIE: /Trident/.test( navigator.userAgent ),
+            isIOS: /(iPhone|iPad|iPod)/.test( navigator.platform ),
+            isOpera: /OPR/.test( navigator.userAgent ),
+            isSafari: /Safari/.test( navigator.userAgent ) && !/Chrome/.test( navigator.userAgent ),
+            isTouchScreen: ( 'ontouchstart' in window ) || window.DocumentTouch && document instanceof DocumentTouch,
+            isWebComponentsSupported: 'registerElement' in document && 'import' in document.createElement( 'link' ) && 'content' in document.createElement( 'template' )
+        };
+
+        this.monitor = new Monitor( this.species );
 
         Object.keys( this.pages ).map(
             item => new Page(
@@ -138,6 +155,15 @@ class Arbiter
         }
 
         return false;
+    }
+
+    containment( fn, cb = () => {} ) {
+        try {
+            const tried = fn();
+            cb( tried );
+        } catch( e ) {
+            cb( e );
+        }
     }
 
     changePage( hash )
@@ -294,6 +320,7 @@ Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globa
             if( c.indexOf( keyEQ ) === 0 )
                 return c.substring( keyEQ.length, c.length );
         }
+
         return null;
     },
     removeItem: function( key ) {

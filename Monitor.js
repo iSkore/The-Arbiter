@@ -3,8 +3,10 @@
 class Monitor
 {
     // TODO: add "Machine Learning Page Loading" - if page is never clicked, don't preload it
-    constructor()
+    constructor( species )
     {
+        this.species = species;
+
         this.performance = performance || window.performance || {
                 memory: {
                     usedJSHeapSize: 0,
@@ -20,7 +22,7 @@ class Monitor
             };
 
         this.canRun = true;
-        this.canMonitorMemory = ( this.performance );
+        this.canMonitorMemory = this.species.isChrome;
         this.isRunning = false;
         this.views = [];
         this.startTime = null;
@@ -29,23 +31,19 @@ class Monitor
 
     analyze( name )
     {
-        if( !this.canMonitorMemory )
-            if( this.isRunning )
-                this.stop();
-
         this.navigatedTo = name;
+
+        this.memoryUsage = this.canMonitorMemory ?
+                            +( ( this.performance.memory.usedJSHeapSize / this.performance.memory.jsHeapSizeLimit ) * 100 ).toFixed( 3 ) :
+                            0;
+
+        if( this.memoryUsage >= 80 )
+            this.onMemoryWarning( 'Analyze will not run due to memory issue.' );
 
         if( this.isRunning )
             this.stop();
 
-        this.memoryUsage = +(
-            ( this.performance.memory.usedJSHeapSize / this.performance.memory.jsHeapSizeLimit ) * 100
-        ).toFixed( 3 );
-
-        if( this.memoryUsage >= 80 )
-            this.onMemoryWarning( 'Analyze will not run due to memory issue.' );
-        else
-            this.start( name );
+        this.start( name );
     }
 
     onMemoryWarning( e )
@@ -71,14 +69,14 @@ class Monitor
         if( !this.canRun ) return;
         this.page = page;
         this.viewTime = new Date();
-        this.startTime = this.performance.now();
+        this.startTime = Date.now();
         this.isRunning = true;
     }
 
     stop()
     {
         if( !this.canRun ) return;
-        this.stopTime = this.performance.now();
+        this.stopTime = Date.now();
 
         const viewDuration = ( this.stopTime - this.startTime );
 
