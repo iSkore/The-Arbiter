@@ -3,10 +3,24 @@
 class Monitor
 {
     // TODO: add "Machine Learning Page Loading" - if page is never clicked, don't preload it
-    constructor( debug )
+    constructor()
     {
+        this.performance = performance || window.performance || {
+                memory: {
+                    usedJSHeapSize: 0,
+                    jsHeapSizeLimit: 0,
+                    totalJSHeapSize: 0
+                },
+                offset: Date.now(),
+                now: () => {
+                    const take = this.performance.offset;
+                    this.performance.offset = Date.now();
+                    return Date.now() - take;
+                }
+            };
+
         this.canRun = true;
-        this.canMonitorMemory = ( Arbiter.window.hasOwnProperty( 'performance' ) );
+        this.canMonitorMemory = ( this.performance );
         this.isRunning = false;
         this.views = [];
         this.startTime = null;
@@ -15,13 +29,9 @@ class Monitor
 
     analyze( name )
     {
-        if( !this.canMonitorMemory ) {
+        if( !this.canMonitorMemory )
             if( this.isRunning )
                 this.stop();
-
-            if( this.canRun )
-                return this.start();
-        }
 
         this.navigatedTo = name;
 
@@ -29,7 +39,7 @@ class Monitor
             this.stop();
 
         this.memoryUsage = +(
-            ( Arbiter.window.performance.memory.usedJSHeapSize / Arbiter.window.performance.memory.jsHeapSizeLimit ) * 100
+            ( this.performance.memory.usedJSHeapSize / this.performance.memory.jsHeapSizeLimit ) * 100
         ).toFixed( 3 );
 
         if( this.memoryUsage >= 80 )
@@ -61,14 +71,14 @@ class Monitor
         if( !this.canRun ) return;
         this.page = this.currentPage;
         this.viewTime = new Date();
-        this.startTime = performance.now();
+        this.startTime = this.performance.now();
         this.isRunning = true;
     }
 
     stop()
     {
         if( !this.canRun ) return;
-        this.stopTime = performance.now();
+        this.stopTime = this.performance.now();
 
         const viewDuration = ( this.stopTime - this.startTime );
 
@@ -80,8 +90,6 @@ class Monitor
             viewed: ( viewDuration >= 1000 ) ? `${( viewDuration / 1000 ).toFixed( 3 )} s` : `${viewDuration.toFixed( 3 )} ms`,
             memoryUsage: this.memoryUsage
         } );
-
-        Arbiter.window.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
 
         this.navigatedTo = null;
         this.page = null;
