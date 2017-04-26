@@ -13,6 +13,7 @@ const
 // TODO - use librarian for loading of files
 // TODO - document the fact that the Monitor has to call this.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
 // TODO - OR find a good place to put in saving Monitor stats to sessionStorage
+// TODO - Update documentation on new Arbiter static variables and functions
 
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
