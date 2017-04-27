@@ -387,6 +387,7 @@ Arbiter.onPageDidChange = function( e ) {
 
 
 Arbiter.onLocationHashChanged = function( e ) {
+    console.log( e );
     // TODO: put location change in static space
     console.log( 'Hash Did Change' );
 };
