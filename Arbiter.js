@@ -367,6 +367,8 @@ Arbiter.onApplicationDidAppear = function() {
     if( !Arbiter.activePage )
         Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
+    console.log( 'onApplicationDidAppear', Arbiter.activePage );
+
     console.log( 'Application Did Appear' );
 };
 
@@ -382,12 +384,13 @@ Arbiter.onApplicationIsReady = function() {
 
 
 Arbiter.onPageDidChange = function( e ) {
+    console.log( 'onPageDidChange', e );
     console.log( 'Page Did Change' );
 };
 
 
 Arbiter.onLocationHashChanged = function( e ) {
-    console.log( e );
+    console.log( 'onLocationHashChanged', e );
     // TODO: put location change in static space
     console.log( 'Hash Did Change' );
 };
