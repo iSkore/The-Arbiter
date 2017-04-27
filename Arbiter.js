@@ -87,8 +87,15 @@ class Arbiter
 
         fn();
 
+        const page = this.matchHash( Arbiter.location.hash );
+
+        if( page ) {
+            Arbiter.location.qs = this.qs = Arbiter.location.hash.replace( page, '' );
+            Arbiter.location.hash = page;
+        }
+
         if( !Arbiter.activePage )
-            Arbiter.activePage = this.config.mainFile;
+            Arbiter.activePage = page || this.config.mainFile;
 
         this.load( Arbiter.activePage, true, this.onApplicationIsReady );
     }
@@ -160,20 +167,6 @@ class Arbiter
         return false;
     }
 
-    containment( fn, cb = () => {} ) {
-        try {
-            const tried = fn();
-            cb( tried );
-        } catch( e ) {
-            cb( e );
-        }
-    }
-
-    changePage( hash )
-    {
-        location.hash = this.keyToHash( hash );
-    }
-
     /**
      * Session Storage
      */
@@ -209,11 +202,30 @@ class Arbiter
      * End Session Storage
      */
 
+    containment( fn, cb = () => {} ) {
+        try {
+            const tried = fn();
+            cb( tried );
+        } catch( e ) {
+            cb( e );
+        }
+    }
+
+    changePage( hash )
+    {
+        location.hash = this.keyToHash( hash );
+    }
+
     matchHash( hash )
+    {
+        return Arbiter.matchHash( hash );
+    }
+
+    static matchHash( hash )
     {
         const match = hash.match( /(#)\w+/g );
         if( match )
-            Arbiter.location.qs = hash.replace( match[ 0 ], '' );
+            Arbiter.location.qs = this.qs = hash.replace( match[ 0 ], '' );
         return match ? match[ 0 ] : hash.trim();
     }
 
@@ -381,8 +393,9 @@ Arbiter.onSpringBoardLoaded = function( e ) {
 
 Arbiter.onApplicationDidAppear = function() {
     if( !Arbiter.activePage )
-        Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
+        Arbiter.activePage = location.hash || Arbiter.sessionLoad( 'activePage' );
 
+    console.log( location );
     console.log( 'onApplicationDidAppear', Arbiter.activePage );
 
     console.log( 'Application Did Appear' );
