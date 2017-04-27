@@ -1,6 +1,6 @@
 {
   "name": "the-arbiter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The Arbiter is a HTML routing and analytics system for front-end applications and websites.",
   "main": "index.js",
   "scripts": {
