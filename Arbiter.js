@@ -14,6 +14,8 @@ const
 // TODO - document the fact that the Monitor has to call this.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
 // TODO - OR find a good place to put in saving Monitor stats to sessionStorage
 // TODO - Update documentation on new Arbiter static variables and functions
+// TODO - figure out sessionStorage on mobile - not saving page on refresh
+// TODO - put IndexDB/ Librarian loading in here
 
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
@@ -207,15 +209,23 @@ class Arbiter
      * End Session Storage
      */
 
+    matchHash( hash )
+    {
+        const match = hash.match( /(#)\w+/g );
+        if( match )
+            Arbiter.location.qs = hash.replace( match[ 0 ], '' );
+        return match ? match[ 0 ] : hash.trim();
+    }
+
     keyToHash( hash )
     {
-        hash = hash.trim();
+        hash = this.matchHash( hash );
         return hash.startsWith( '#' ) ? hash : `#${hash}`;
     }
 
     hashToKey( hash )
     {
-        hash = hash.trim();
+        hash = this.matchHash( hash );
         return hash.startsWith( '#' ) ? hash.substr( 1 ) : hash;
     }
 
@@ -303,60 +313,60 @@ class Arbiter
     }
 }
 
-// TODO - figure out sessionStorage on mobile - not saving page on refresh
+Arbiter.location = location || window.location;
 Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globalStorage || {
-    length: 0,
-    setItem: function( key, value ) {
-        document.cookie = key + '=' + value + '; path=/';
-        this.length++;
-    },
-    getItem: function( key ) {
-        const
-            keyEQ = key + '=',
-            ca = document.cookie.split( ';' );
+        length: 0,
+        setItem: function( key, value ) {
+            document.cookie = key + '=' + value + '; path=/';
+            this.length++;
+        },
+        getItem: function( key ) {
+            const
+                keyEQ = key + '=',
+                ca = document.cookie.split( ';' );
 
-        for( let i = 0; i < ca.length; i++ ) {
-            let c = ca[ i ];
-            while( c.charAt( 0 ) === ' ' )
-                c = c.substring( 1, c.length );
-            if( c.indexOf( keyEQ ) === 0 )
-                return c.substring( keyEQ.length, c.length );
-        }
+            for( let i = 0; i < ca.length; i++ ) {
+                let c = ca[ i ];
+                while( c.charAt( 0 ) === ' ' )
+                    c = c.substring( 1, c.length );
+                if( c.indexOf( keyEQ ) === 0 )
+                    return c.substring( keyEQ.length, c.length );
+            }
 
-        return null;
-    },
-    removeItem: function( key ) {
-        this.setItem( key, '', -1 );
-        this.length--;
-    },
-    clear: function() {
-        const ca = document.cookie.split( ';' );
-
-        for( let i = 0; i < ca.length; i++ ) {
-            let c = ca[ i ];
-            while( c.charAt( 0 ) === ' ' )
-                c = c.substring( 1, c.length );
-
-            const key = c.substring( 0, c.indexOf( '=' ) );
-
-            this.removeItem( key );
-        }
-
-        this.length = 0;
-    },
-    key: function( n ) {
-        const ca = document.cookie.split( ';' );
-        if( n >= ca.length || isNaN( parseFloat( n ) ) || !isFinite( n ) )
             return null;
+        },
+        removeItem: function( key ) {
+            this.setItem( key, '', -1 );
+            this.length--;
+        },
+        clear: function() {
+            const ca = document.cookie.split( ';' );
 
-        let c = ca[ n ];
+            for( let i = 0; i < ca.length; i++ ) {
+                let c = ca[ i ];
+                while( c.charAt( 0 ) === ' ' )
+                    c = c.substring( 1, c.length );
 
-        while( c.charAt( 0 ) === ' ' )
-            c = c.substring( 1, c.length );
+                const key = c.substring( 0, c.indexOf( '=' ) );
 
-        return c.substring( 0, c.indexOf( '=' ) );
-    }
-};
+                this.removeItem( key );
+            }
+
+            this.length = 0;
+        },
+        key: function( n ) {
+            const ca = document.cookie.split( ';' );
+            if( n >= ca.length || isNaN( parseFloat( n ) ) || !isFinite( n ) )
+                return null;
+
+            let c = ca[ n ];
+
+            while( c.charAt( 0 ) === ' ' )
+                c = c.substring( 1, c.length );
+
+            return c.substring( 0, c.indexOf( '=' ) );
+        }
+    };
 
 Arbiter.indexedDB      = indexedDB      || window.indexedDB      || window.mozIndexedDB         || window.webkitIndexedDB  || window.msIndexedDB;
 Arbiter.IDBTransaction = IDBTransaction || window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
@@ -366,9 +376,7 @@ Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 // Experimental purposes
 Arbiter.onSpringBoardLoaded = function( e ) {
-    console.log( 'onSpringBoardLoaded' );
-
-    // TODO - put IndexDB/ Librarian loading in here
+    console.log( 'onSpringBoardLoaded', e );
 };
 
 Arbiter.onApplicationDidAppear = function() {
