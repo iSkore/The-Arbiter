@@ -365,10 +365,9 @@ Arbiter.IDBKeyRange    = IDBKeyRange    || window.IDBKeyRange    || window.webki
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 // Experimental purposes
+// TODO - put IndexDB/ Librarian loading in here
 Arbiter.onSpringBoardLoaded = function( e ) {
-    console.log( 'onSpringBoardLoaded' );
-
-    // TODO - put IndexDB/ Librarian loading in here
+    console.log( 'onSpringBoardLoaded', e );
 };
 
 Arbiter.onApplicationDidAppear = function() {
