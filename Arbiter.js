@@ -14,6 +14,8 @@ const
 // TODO - document the fact that the Monitor has to call this.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
 // TODO - OR find a good place to put in saving Monitor stats to sessionStorage
 // TODO - Update documentation on new Arbiter static variables and functions
+// TODO - figure out sessionStorage on mobile - not saving page on refresh
+// TODO - put IndexDB/ Librarian loading in here
 
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
@@ -303,7 +305,6 @@ class Arbiter
     }
 }
 
-// TODO - figure out sessionStorage on mobile - not saving page on refresh
 Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globalStorage || {
     length: 0,
     setItem: function( key, value ) {
@@ -365,7 +366,6 @@ Arbiter.IDBKeyRange    = IDBKeyRange    || window.IDBKeyRange    || window.webki
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 // Experimental purposes
-// TODO - put IndexDB/ Librarian loading in here
 Arbiter.onSpringBoardLoaded = function( e ) {
     console.log( 'onSpringBoardLoaded', e );
 };
