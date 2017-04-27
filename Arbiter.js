@@ -79,11 +79,11 @@ class Arbiter
             ).apply( this )
         );
 
+        this.globalExecution.addSubscription( globalExecution );
+
         this.isReady = true;
 
         fn();
-
-        this.globalExecution.addSubscription( globalExecution );
 
         if( !Arbiter.activePage )
             Arbiter.activePage = this.config.mainFile;
@@ -303,6 +303,7 @@ class Arbiter
     }
 }
 
+// TODO - figure out sessionStorage on mobile - not saving page on refresh
 Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globalStorage || {
     length: 0,
     setItem: function( key, value ) {
@@ -357,11 +358,18 @@ Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globa
     }
 };
 
-Arbiter.indexedDB      = indexedDB || window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+Arbiter.indexedDB      = indexedDB      || window.indexedDB      || window.mozIndexedDB         || window.webkitIndexedDB  || window.msIndexedDB;
 Arbiter.IDBTransaction = IDBTransaction || window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
-Arbiter.IDBKeyRange    = IDBKeyRange || window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+Arbiter.IDBKeyRange    = IDBKeyRange    || window.IDBKeyRange    || window.webkitIDBKeyRange    || window.msIDBKeyRange;
 
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
+
+// Experimental purposes
+Arbiter.onSpringBoardLoaded = function( e ) {
+    console.log( 'onSpringBoardLoaded' );
+
+    // TODO - put IndexDB/ Librarian loading in here
+};
 
 Arbiter.onApplicationDidAppear = function() {
     if( !Arbiter.activePage )
@@ -372,22 +380,18 @@ Arbiter.onApplicationDidAppear = function() {
     console.log( 'Application Did Appear' );
 };
 
-
 Arbiter.onApplicationDidLoad = function() {
     console.log( 'Application Did Load' );
 };
-
 
 Arbiter.onApplicationIsReady = function() {
     console.log( 'Application Is Ready' );
 };
 
-
 Arbiter.onPageDidChange = function( e ) {
     console.log( 'onPageDidChange', e );
     console.log( 'Page Did Change' );
 };
-
 
 Arbiter.onLocationHashChanged = function( e ) {
     console.log( 'onLocationHashChanged', e );
@@ -396,22 +400,22 @@ Arbiter.onLocationHashChanged = function( e ) {
 };
 
 Arbiter.saveOnUnload = function() {
-    Arbiter.sessionSave( 'activePage', Arbiter.activePage );
-    window.onbeforeunload = null;
+    // Arbiter.sessionSave( 'activePage', Arbiter.activePage );
+    // window.onbeforeunload = !Arbiter.activePage ? 'wait' : null;
+    window.onbeforeunload = ( Arbiter.sessionSave( 'activePage', Arbiter.activePage ), null );
 };
 
 Arbiter.onApplicationDidUnload = function() {
     console.log( 'Application Did Unload' );
 
     setTimeout( Arbiter.saveOnUnload, 0 );
-
-    return Arbiter.onApplicationDidDisappear();
 };
 
-Arbiter.onApplicationDidDisappear = function() {
+Arbiter.onApplicationDidDisappear = function( e ) {
     console.log( 'Application Did Disappear' );
+    setTimeout( Arbiter.saveOnUnload, 0 );
+    return Arbiter.onSpringBoardLoaded( e );
 };
-
 
 Arbiter.onApplicationDidReceiveMemoryWarning = function() {
     console.log( 'Application Did Receive Memory Warning' );
