@@ -20,17 +20,16 @@ const
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
-class Arbiter
+class Arbiter extends Librarian
 {
     constructor( pages )
     {
-        this.version = version;
+        super( 1 );
 
-        this.routes = {};
-
+        this.version         = version;
+        this.routes          = {};
         this.globalExecution = new PubSub();
-
-        this.config = pages;
+        this.config          = pages;
 
         this.pages = pages.pages.reduce( ( r, page ) => {
             r[ page.name ] = page;
@@ -50,10 +49,10 @@ class Arbiter
         } );
     }
 
-    init( fn, globalExecution = () => {} )
+    init( fn, globalExecution = () => {}, container = 'body' )
     {
         fn = fn || ( () => {} );
-        this.container = $( 'body' );
+        this.container = $( container );
 
         this.species = {
             isAndroid: /Android/.test( navigator.userAgent ),
@@ -325,65 +324,6 @@ class Arbiter
     }
 }
 
-Arbiter.location = location || window.location;
-Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globalStorage || {
-        length: 0,
-        setItem: function( key, value ) {
-            document.cookie = key + '=' + value + '; path=/';
-            this.length++;
-        },
-        getItem: function( key ) {
-            const
-                keyEQ = key + '=',
-                ca = document.cookie.split( ';' );
-
-            for( let i = 0; i < ca.length; i++ ) {
-                let c = ca[ i ];
-                while( c.charAt( 0 ) === ' ' )
-                    c = c.substring( 1, c.length );
-                if( c.indexOf( keyEQ ) === 0 )
-                    return c.substring( keyEQ.length, c.length );
-            }
-
-            return null;
-        },
-        removeItem: function( key ) {
-            this.setItem( key, '', -1 );
-            this.length--;
-        },
-        clear: function() {
-            const ca = document.cookie.split( ';' );
-
-            for( let i = 0; i < ca.length; i++ ) {
-                let c = ca[ i ];
-                while( c.charAt( 0 ) === ' ' )
-                    c = c.substring( 1, c.length );
-
-                const key = c.substring( 0, c.indexOf( '=' ) );
-
-                this.removeItem( key );
-            }
-
-            this.length = 0;
-        },
-        key: function( n ) {
-            const ca = document.cookie.split( ';' );
-            if( n >= ca.length || isNaN( parseFloat( n ) ) || !isFinite( n ) )
-                return null;
-
-            let c = ca[ n ];
-
-            while( c.charAt( 0 ) === ' ' )
-                c = c.substring( 1, c.length );
-
-            return c.substring( 0, c.indexOf( '=' ) );
-        }
-    };
-
-Arbiter.indexedDB      = indexedDB      || window.indexedDB      || window.mozIndexedDB         || window.webkitIndexedDB  || window.msIndexedDB;
-Arbiter.IDBTransaction = IDBTransaction || window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
-Arbiter.IDBKeyRange    = IDBKeyRange    || window.IDBKeyRange    || window.webkitIDBKeyRange    || window.msIDBKeyRange;
-
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 // Experimental purposes
@@ -394,9 +334,6 @@ Arbiter.onSpringBoardLoaded = function( e ) {
 Arbiter.onApplicationDidAppear = function() {
     if( !Arbiter.activePage )
         Arbiter.activePage = location.hash || Arbiter.sessionLoad( 'activePage' );
-
-    console.log( location );
-    console.log( 'onApplicationDidAppear', Arbiter.activePage );
 
     console.log( 'Application Did Appear' );
 };
@@ -443,3 +380,43 @@ Arbiter.onApplicationDidReceiveMemoryWarning = function() {
 };
 
 module.exports = Arbiter;
+
+
+/**
+ 'use strict';
+
+ const
+ Arbiter        = require( 'the-arbiter' ),
+ _pages         = require( '../../config/pages.json' ),
+ _a = window._a = new Arbiter( _pages );
+
+ window.onload = Arbiter.onApplicationDidLoad;
+ window.onbeforeunload = Arbiter.onApplicationDidUnload;
+ window.onhashchange = locationHashChanged;
+ window.addEventListener( 'popstate', pageDidChange );
+ document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
+
+ window.addEventListener( 'unhandledrejection', function( e ) {
+    e.preventDefault();
+    console.log( e.reason, e.promise );
+} );
+
+ _a.init();
+
+ function locationHashChanged( e ) {
+    if ( !_a.isPageRouted( location.hash ) )
+        return console.warn( `${location.hash} is not managed by The Arbiter.` );
+
+    if ( !_a.hashToKey( location.hash ) || _a.currentPage === '' || _a.isPageRendered( location.hash ) )
+        return;
+
+    _a.load( location.hash, true, () => console.log( location.hash + ' loaded' ) );
+
+    Arbiter.onLocationHashChanged( e );
+}
+
+ function pageDidChange( e ) {
+    locationHashChanged( e );
+    Arbiter.onPageDidChange( e );
+ }
+ */
