@@ -5,58 +5,62 @@ class Librarian
     // TODO add local, session, and indexDB storage to this class
     // TODO save files and other things to this Library
     // TODO add Lesser AI functionality to retrieval, storage, & loading of assets
-    constructor( dbv )
+    constructor( dbv, verbose )
     {
+        Librarian.verbose = verbose;
+
         this.DB        = null;
         this.DBVersion = dbv;
-        this.DBRequest = Librarian.indexedDB.open( 'Librarian', this.DBVersion );
-
-        this.DBRequest.onerror = e => {
-            this.DB = e.target.result;
-            console.warn( 'User does not allow IndexedDB', e.target.errorCode );
-        };
-
-        this.DBRequest.onupgradeneeded = e => {
-            this.DB          = e.target.result;
-            this.fileStorage = this.createObjectStore( 'fileStorage', { keyPath: 'name' } );
-            this.fileIndex   = this.createIndex( this.fileStorage, 'fileIndex', [ 'file.name', 'file.data' ] );
-        };
-
-        this.DBRequest.onsuccess = e => {
-            this.DB = e.target.result;
-
-        };
-
-        this.DBRequest.onsuccess = function( e ) {
-            console.log( 'Librarian: onsuccess' );
-
-            var db = e.target.result;
-            var tx = db.transaction( "MyObjectStore", "readwrite" );
-            console.log( tx );
-            var store = tx.objectStore( "MyObjectStore" );
-            var index = store.index( "NameIndex" );
-
-            // Add some data
-            store.put( { id: 12345, name: { first: "John", last: "Doe" }, age: 42 } );
-            store.put( { id: 67890, name: { first: "Bob", last: "Smith" }, age: 35 } );
-
-            // Query the data
-            var getJohn = store.get( 12345 );
-            var getBob = index.get( [ "Smith", "Bob" ] );
-
-            getJohn.onsuccess = function() {
-                console.log( getJohn.result.name.first );  // => "John"
-            };
-
-            getBob.onsuccess = function() {
-                console.log( getBob.result.name.first );   // => "Bob"
-            };
-
-            // Close the db when the transaction is done
-            tx.oncomplete = function() {
-                db.close();
-            };
-        };
+        // this.DBRequest = Librarian.indexedDB.open( 'Librarian', this.DBVersion );
+        //
+        // this.DBRequest.onerror = e => {
+        //     this.DB = e.target.result;
+        //     console.warn( 'User does not allow IndexedDB', e.target.errorCode );
+        // };
+        //
+        // this.DBRequest.onupgradeneeded = e => {
+        //     this.DB          = e.target.result;
+        //     this.fileStorage = this.createObjectStore( 'fileStorage', { keyPath: 'name' } );
+        //     this.fileIndex   = this.createIndex( this.fileStorage, 'fileIndex', [ 'file.name', 'file.data' ] );
+        // };
+        //
+        // this.DBRequest.onsuccess = e => {
+        //     this.DB = e.target.result;
+        //
+        // };
+        //
+        // this.DBRequest.onsuccess = function( e ) {
+        //     if( Librarian.verbose )
+        //         console.log( 'Librarian: onsuccess' );
+        //
+        //     var db = e.target.result;
+        //     var tx = db.transaction( "MyObjectStore", "readwrite" );
+        //     if( Librarian.verbose )
+        //         console.log( tx );
+        //     var store = tx.objectStore( "MyObjectStore" );
+        //     var index = store.index( "NameIndex" );
+        //
+        //     // Add some data
+        //     store.put( { id: 12345, name: { first: "John", last: "Doe" }, age: 42 } );
+        //     store.put( { id: 67890, name: { first: "Bob", last: "Smith" }, age: 35 } );
+        //
+        //     // Query the data
+        //     var getJohn = store.get( 12345 );
+        //     var getBob = index.get( [ "Smith", "Bob" ] );
+        //
+        //     getJohn.onsuccess = function() {
+        //         console.log( getJohn.result.name.first );  // => "John"
+        //     };
+        //
+        //     getBob.onsuccess = function() {
+        //         console.log( getBob.result.name.first );   // => "Bob"
+        //     };
+        //
+        //     // Close the db when the transaction is done
+        //     tx.oncomplete = function() {
+        //         db.close();
+        //     };
+        // };
     }
 
     createObjectStore( name, scheme )

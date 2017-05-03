@@ -16,15 +16,18 @@ const
 // TODO - Update documentation on new Arbiter static variables and functions
 // TODO - figure out sessionStorage on mobile - not saving page on refresh
 // TODO - put IndexDB/ Librarian loading in here
+// TODO: put location change in static space
 
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
 class Arbiter extends Librarian
 {
-    constructor( pages )
+    constructor( pages, verbose = false )
     {
-        super( 1 );
+        super( 1, verbose );
+
+        Arbiter.verbose = verbose;
 
         this.version         = version;
         this.routes          = {};
@@ -52,6 +55,7 @@ class Arbiter extends Librarian
     init( fn, globalExecution = () => {}, container = 'body' )
     {
         fn = fn || ( () => {} );
+        globalExecution = globalExecution || ( () => {} );
         this.container = $( container );
 
         this.species = {
@@ -101,7 +105,9 @@ class Arbiter extends Librarian
 
     render( page )
     {
-        console.log( page );
+        if( Arbiter.verbose )
+            console.log( page );
+
         page.preRender();
 
         this.currentPage = page.name;
@@ -328,33 +334,37 @@ Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 // Experimental purposes
 Arbiter.onSpringBoardLoaded = function( e ) {
-    console.log( 'onSpringBoardLoaded', e );
+    if( Arbiter.verbose )
+        console.log( 'onSpringBoardLoaded', e );
 };
 
-Arbiter.onApplicationDidAppear = function() {
+Arbiter.onApplicationDidAppear = function( e ) {
     if( !Arbiter.activePage )
         Arbiter.activePage = location.hash || Arbiter.sessionLoad( 'activePage' );
-
-    console.log( 'Application Did Appear' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Appear' );
 };
 
 Arbiter.onApplicationDidLoad = function() {
-    console.log( 'Application Did Load' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Load' );
 };
 
 Arbiter.onApplicationIsReady = function() {
-    console.log( 'Application Is Ready' );
+    if( Arbiter.verbose )
+        console.log( 'Application Is Ready' );
 };
 
 Arbiter.onPageDidChange = function( e ) {
-    console.log( 'onPageDidChange', e );
-    console.log( 'Page Did Change' );
+    if( Arbiter.verbose ) {
+        console.log( 'onPageDidChange', e );
+        console.log( 'Page Did Change' );
+    }
 };
 
 Arbiter.onLocationHashChanged = function( e ) {
-    console.log( 'onLocationHashChanged', e );
-    // TODO: put location change in static space
-    console.log( 'Hash Did Change' );
+    if( Arbiter.verbose )
+        console.log( 'onLocationHashChanged', e );
 };
 
 Arbiter.saveOnUnload = function() {
@@ -364,19 +374,23 @@ Arbiter.saveOnUnload = function() {
 };
 
 Arbiter.onApplicationDidUnload = function() {
-    console.log( 'Application Did Unload' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Unload' );
 
     setTimeout( Arbiter.saveOnUnload, 0 );
 };
 
 Arbiter.onApplicationDidDisappear = function( e ) {
-    console.log( 'Application Did Disappear' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Disappear' );
+
     setTimeout( Arbiter.saveOnUnload, 0 );
     return Arbiter.onSpringBoardLoaded( e );
 };
 
 Arbiter.onApplicationDidReceiveMemoryWarning = function() {
-    console.log( 'Application Did Receive Memory Warning' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Receive Memory Warning' );
 };
 
 module.exports = Arbiter;
