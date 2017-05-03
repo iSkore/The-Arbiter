@@ -1,31 +1,39 @@
 'use strict';
 
 const
-    Monitor   = require( './Monitor' ),
-    Page      = require( './Page' ),
-    PubSub    = require( './PubSub' ),
-    Librarian = require( './Librarian' );
+    Monitor     = require( './Monitor' ),
+    Page        = require( './Page' ),
+    PubSub      = require( './PubSub' ),
+    Librarian   = require( './Librarian' ),
+    { version } = require( './package.json' );
 
-// TODO save this to session storage
-// TODO create save and load function
-// TODO create on off variable for console.log debugging mode
-// TODO use librarian for loading of files
+// TODO - save this to session storage
+// TODO - create save and load function
+// TODO - create on off variable for console.log debugging mode
+// TODO - use librarian for loading of files
+// TODO - document the fact that the Monitor has to call this.sessionStorage.setItem( 'monitor', JSON.stringify( this.views ) );
+// TODO - OR find a good place to put in saving Monitor stats to sessionStorage
+// TODO - Update documentation on new Arbiter static variables and functions
+// TODO - figure out sessionStorage on mobile - not saving page on refresh
+// TODO - put IndexDB/ Librarian loading in here
+// TODO: put location change in static space
+
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
-class Arbiter extends Monitor
+class Arbiter extends Librarian
 {
-    constructor( pages )
+    constructor( pages, verbose = false )
     {
-        super();
+        super( 1, verbose );
 
-        this.version = 'v0.0.4';
+        Arbiter.verbose = verbose;
 
-        this.routes = {};
-
+        this.version         = version;
+        this.routes          = {};
         this.globalExecution = new PubSub();
+        this.config          = pages;
 
-        this.config = pages;
         this.pages = pages.pages.reduce( ( r, page ) => {
             r[ page.name ] = page;
             return r;
@@ -39,20 +47,34 @@ class Arbiter extends Monitor
             },
             set: pageName => {
                 Arbiter.activePage = pageName;
-                this.analyze( pageName );
+                this.monitor.analyze( pageName );
             }
         } );
     }
 
-    /**
-     * init
-     * @param fn - run function on initialization
-     * @param globalExecution - add function to globalExecution
-     */
-    init( fn = () => {}, globalExecution = () => {} )
+    init( fn, globalExecution = () => {}, container = 'body' )
     {
         fn = fn || ( () => {} );
-        this.container = $( 'body' );
+        globalExecution = globalExecution || ( () => {} );
+        this.container = $( container );
+
+        this.species = {
+            isAndroid: /Android/.test( navigator.userAgent ),
+            isCordova: !!window.cordova,
+            isEdge: /Edge/.test( navigator.userAgent ),
+            isFirefox: /Firefox/.test( navigator.userAgent ),
+            isChrome: /Google Inc/.test( navigator.vendor ),
+            isChromeIOS: /CriOS/.test( navigator.userAgent ),
+            isChromiumBased: !!window.chrome && !/Edge/.test( navigator.userAgent ),
+            isIE: /Trident/.test( navigator.userAgent ),
+            isIOS: /(iPhone|iPad|iPod)/.test( navigator.platform ),
+            isOpera: /OPR/.test( navigator.userAgent ),
+            isSafari: /Safari/.test( navigator.userAgent ) && !/Chrome/.test( navigator.userAgent ),
+            isTouchScreen: ( 'ontouchstart' in window ) || window.DocumentTouch && document instanceof DocumentTouch,
+            isWebComponentsSupported: 'registerElement' in document && 'import' in document.createElement( 'link' ) && 'content' in document.createElement( 'template' )
+        };
+
+        this.monitor = new Monitor( this.species );
 
         Object.keys( this.pages ).map(
             item => new Page(
@@ -62,21 +84,30 @@ class Arbiter extends Monitor
             ).apply( this )
         );
 
+        this.globalExecution.addSubscription( globalExecution );
+
         this.isReady = true;
 
         fn();
 
-        this.globalExecution.addSubscription( globalExecution );
+        const page = this.matchHash( Arbiter.location.hash );
+
+        if( page ) {
+            Arbiter.location.qs = this.qs = Arbiter.location.hash.replace( page, '' );
+            Arbiter.location.hash = page;
+        }
 
         if( !Arbiter.activePage )
-            Arbiter.activePage = this.config.mainFile;
+            Arbiter.activePage = page || this.config.mainFile;
 
         this.load( Arbiter.activePage, true, this.onApplicationIsReady );
     }
 
     render( page )
     {
-        console.log( page );
+        if( Arbiter.verbose )
+            console.log( page );
+
         page.preRender();
 
         this.currentPage = page.name;
@@ -141,13 +172,8 @@ class Arbiter extends Monitor
         return false;
     }
 
-    changePage( hash )
-    {
-        location.hash = this.keyToHash( hash );
-    }
-
     /**
-     * Session and Local Storage
+     * Session Storage
      */
     // TODO move this function set to it's own class
     sessionSave( key, data )
@@ -160,7 +186,7 @@ class Arbiter extends Monitor
         if( data !== ''+data )
             data = JSON.stringify( data );
 
-        sessionStorage.setItem( key, data );
+        Arbiter.sessionStorage.setItem( key, data );
     }
 
     sessionLoad( key )
@@ -170,35 +196,7 @@ class Arbiter extends Monitor
 
     static sessionLoad( key )
     {
-        let data = sessionStorage.getItem( key );
-
-        try { data = JSON.parse( data ); }
-        catch( e ) {}
-
-        return data;
-    }
-
-    localSave( key, data )
-    {
-        Arbiter.localSave( key, data );
-    }
-
-    static localSave( key, data )
-    {
-        if( data !== ''+data )
-            data = JSON.stringify( data );
-
-        localStorage.setItem( key, data );
-    }
-
-    localLoad( key )
-    {
-        return Arbiter.localLoad( key );
-    }
-
-    static localLoad( key )
-    {
-        let data = localStorage.getItem( key );
+        let data = Arbiter.sessionStorage.getItem( key );
 
         try { data = JSON.parse( data ); }
         catch( e ) {}
@@ -206,18 +204,45 @@ class Arbiter extends Monitor
         return data;
     }
     /**
-     * End Session and Local Storage
+     * End Session Storage
      */
+
+    containment( fn, cb = () => {} ) {
+        try {
+            const tried = fn();
+            cb( tried );
+        } catch( e ) {
+            cb( e );
+        }
+    }
+
+    changePage( hash )
+    {
+        location.hash = this.keyToHash( hash );
+    }
+
+    matchHash( hash )
+    {
+        return Arbiter.matchHash( hash );
+    }
+
+    static matchHash( hash )
+    {
+        const match = hash.match( /(#)\w+/g );
+        if( match )
+            Arbiter.location.qs = this.qs = hash.replace( match[ 0 ], '' );
+        return match ? match[ 0 ] : hash.trim();
+    }
 
     keyToHash( hash )
     {
-        hash = hash.trim();
+        hash = this.matchHash( hash );
         return hash.startsWith( '#' ) ? hash : `#${hash}`;
     }
 
     hashToKey( hash )
     {
-        hash = hash.trim();
+        hash = this.matchHash( hash );
         return hash.startsWith( '#' ) ? hash.substr( 1 ) : hash;
     }
 
@@ -307,56 +332,105 @@ class Arbiter extends Monitor
 
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
-Arbiter.onApplicationDidAppear = function() {
-    if( !Arbiter.activePage )
-        Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
-
-    console.log( 'Application Did Appear' );
+// Experimental purposes
+Arbiter.onSpringBoardLoaded = function( e ) {
+    if( Arbiter.verbose )
+        console.log( 'onSpringBoardLoaded', e );
 };
 
+Arbiter.onApplicationDidAppear = function( e ) {
+    if( !Arbiter.activePage )
+        Arbiter.activePage = location.hash || Arbiter.sessionLoad( 'activePage' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Appear' );
+};
 
 Arbiter.onApplicationDidLoad = function() {
-    console.log( 'Application Did Load' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Load' );
 };
-
 
 Arbiter.onApplicationIsReady = function() {
-    console.log( 'Application Is Ready' );
+    if( Arbiter.verbose )
+        console.log( 'Application Is Ready' );
 };
-
 
 Arbiter.onPageDidChange = function( e ) {
-    console.log( 'Page Did Change' );
+    if( Arbiter.verbose ) {
+        console.log( 'onPageDidChange', e );
+        console.log( 'Page Did Change' );
+    }
 };
 
-
 Arbiter.onLocationHashChanged = function( e ) {
-    // TODO: put location change in static space
-    console.log( 'Hash Did Change' );
+    if( Arbiter.verbose )
+        console.log( 'onLocationHashChanged', e );
 };
 
 Arbiter.saveOnUnload = function() {
-    console.log( 'Saving:', Arbiter.activePage );
-    Arbiter.sessionSave( 'activePage', Arbiter.activePage );
-    window.onbeforeunload = null;
+    // Arbiter.sessionSave( 'activePage', Arbiter.activePage );
+    // window.onbeforeunload = !Arbiter.activePage ? 'wait' : null;
+    window.onbeforeunload = ( Arbiter.sessionSave( 'activePage', Arbiter.activePage ), null );
 };
 
 Arbiter.onApplicationDidUnload = function() {
-    console.log( 'Application Did Unload' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Unload' );
 
     setTimeout( Arbiter.saveOnUnload, 0 );
-
-    return Arbiter.onApplicationDidDisappear();
 };
 
+Arbiter.onApplicationDidDisappear = function( e ) {
+    if( Arbiter.verbose )
+        console.log( 'Application Did Disappear' );
 
-Arbiter.onApplicationDidDisappear = function() {
-    console.log( 'Application Did Disappear' );
+    setTimeout( Arbiter.saveOnUnload, 0 );
+    return Arbiter.onSpringBoardLoaded( e );
 };
-
 
 Arbiter.onApplicationDidReceiveMemoryWarning = function() {
-    console.log( 'Application Did Receive Memory Warning' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Receive Memory Warning' );
 };
 
 module.exports = Arbiter;
+
+
+/**
+ 'use strict';
+
+ const
+ Arbiter        = require( 'the-arbiter' ),
+ _pages         = require( '../../config/pages.json' ),
+ _a = window._a = new Arbiter( _pages );
+
+ window.onload = Arbiter.onApplicationDidLoad;
+ window.onbeforeunload = Arbiter.onApplicationDidUnload;
+ window.onhashchange = locationHashChanged;
+ window.addEventListener( 'popstate', pageDidChange );
+ document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
+
+ window.addEventListener( 'unhandledrejection', function( e ) {
+    e.preventDefault();
+    console.log( e.reason, e.promise );
+} );
+
+ _a.init();
+
+ function locationHashChanged( e ) {
+    if ( !_a.isPageRouted( location.hash ) )
+        return console.warn( `${location.hash} is not managed by The Arbiter.` );
+
+    if ( !_a.hashToKey( location.hash ) || _a.currentPage === '' || _a.isPageRendered( location.hash ) )
+        return;
+
+    _a.load( location.hash, true, () => console.log( location.hash + ' loaded' ) );
+
+    Arbiter.onLocationHashChanged( e );
+}
+
+ function pageDidChange( e ) {
+    locationHashChanged( e );
+    Arbiter.onPageDidChange( e );
+ }
+ */
