@@ -107,8 +107,8 @@ Manages page routing, monitoring, and lifecycle.
 
 - `constructor`
     - Arguments:
-        - (array) pages: config object including the array of pages for the arbiter to manage
-        - (boolean) verbose: log the Arbiter's actions
+        - `(array) pages: config object including the array of pages for the arbiter to manage`
+        - `(boolean) verbose: log the Arbiter's actions`
     - Sets up routes, pages, and `currentPage`
 
 - `init`
