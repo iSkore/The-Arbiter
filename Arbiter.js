@@ -16,21 +16,23 @@ const
 // TODO - Update documentation on new Arbiter static variables and functions
 // TODO - figure out sessionStorage on mobile - not saving page on refresh
 // TODO - put IndexDB/ Librarian loading in here
+// TODO: put location change in static space
 
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
 
-class Arbiter
+class Arbiter extends Librarian
 {
-    constructor( pages )
+    constructor( pages, verbose = false )
     {
-        this.version = version;
+        super( 1, verbose );
 
-        this.routes = {};
+        Arbiter.verbose = verbose;
 
+        this.version         = version;
+        this.routes          = {};
         this.globalExecution = new PubSub();
-
-        this.config = pages;
+        this.config          = pages;
 
         this.pages = pages.pages.reduce( ( r, page ) => {
             r[ page.name ] = page;
@@ -50,10 +52,11 @@ class Arbiter
         } );
     }
 
-    init( fn, globalExecution = () => {} )
+    init( fn, globalExecution = () => {}, container = 'body' )
     {
         fn = fn || ( () => {} );
-        this.container = $( 'body' );
+        globalExecution = globalExecution || ( () => {} );
+        this.container = $( container );
 
         this.species = {
             isAndroid: /Android/.test( navigator.userAgent ),
@@ -102,7 +105,9 @@ class Arbiter
 
     render( page )
     {
-        console.log( page );
+        if( Arbiter.verbose )
+            console.log( page );
+
         page.preRender();
 
         this.currentPage = page.name;
@@ -325,99 +330,41 @@ class Arbiter
     }
 }
 
-Arbiter.location = location || window.location;
-Arbiter.sessionStorage = sessionStorage || window.sessionStorage || window.globalStorage || {
-        length: 0,
-        setItem: function( key, value ) {
-            document.cookie = key + '=' + value + '; path=/';
-            this.length++;
-        },
-        getItem: function( key ) {
-            const
-                keyEQ = key + '=',
-                ca = document.cookie.split( ';' );
-
-            for( let i = 0; i < ca.length; i++ ) {
-                let c = ca[ i ];
-                while( c.charAt( 0 ) === ' ' )
-                    c = c.substring( 1, c.length );
-                if( c.indexOf( keyEQ ) === 0 )
-                    return c.substring( keyEQ.length, c.length );
-            }
-
-            return null;
-        },
-        removeItem: function( key ) {
-            this.setItem( key, '', -1 );
-            this.length--;
-        },
-        clear: function() {
-            const ca = document.cookie.split( ';' );
-
-            for( let i = 0; i < ca.length; i++ ) {
-                let c = ca[ i ];
-                while( c.charAt( 0 ) === ' ' )
-                    c = c.substring( 1, c.length );
-
-                const key = c.substring( 0, c.indexOf( '=' ) );
-
-                this.removeItem( key );
-            }
-
-            this.length = 0;
-        },
-        key: function( n ) {
-            const ca = document.cookie.split( ';' );
-            if( n >= ca.length || isNaN( parseFloat( n ) ) || !isFinite( n ) )
-                return null;
-
-            let c = ca[ n ];
-
-            while( c.charAt( 0 ) === ' ' )
-                c = c.substring( 1, c.length );
-
-            return c.substring( 0, c.indexOf( '=' ) );
-        }
-    };
-
-Arbiter.indexedDB      = indexedDB      || window.indexedDB      || window.mozIndexedDB         || window.webkitIndexedDB  || window.msIndexedDB;
-Arbiter.IDBTransaction = IDBTransaction || window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction || { READ_WRITE: 'readwrite' };
-Arbiter.IDBKeyRange    = IDBKeyRange    || window.IDBKeyRange    || window.webkitIDBKeyRange    || window.msIDBKeyRange;
-
 Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
 
 // Experimental purposes
 Arbiter.onSpringBoardLoaded = function( e ) {
-    console.log( 'onSpringBoardLoaded', e );
+    if( Arbiter.verbose )
+        console.log( 'onSpringBoardLoaded', e );
 };
 
-Arbiter.onApplicationDidAppear = function() {
+Arbiter.onApplicationDidAppear = function( e ) {
     if( !Arbiter.activePage )
         Arbiter.activePage = location.hash || Arbiter.sessionLoad( 'activePage' );
-
-    console.log( location );
-    console.log( 'onApplicationDidAppear', Arbiter.activePage );
-
-    console.log( 'Application Did Appear' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Appear' );
 };
 
 Arbiter.onApplicationDidLoad = function() {
-    console.log( 'Application Did Load' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Load' );
 };
 
 Arbiter.onApplicationIsReady = function() {
-    console.log( 'Application Is Ready' );
+    if( Arbiter.verbose )
+        console.log( 'Application Is Ready' );
 };
 
 Arbiter.onPageDidChange = function( e ) {
-    console.log( 'onPageDidChange', e );
-    console.log( 'Page Did Change' );
+    if( Arbiter.verbose ) {
+        console.log( 'onPageDidChange', e );
+        console.log( 'Page Did Change' );
+    }
 };
 
 Arbiter.onLocationHashChanged = function( e ) {
-    console.log( 'onLocationHashChanged', e );
-    // TODO: put location change in static space
-    console.log( 'Hash Did Change' );
+    if( Arbiter.verbose )
+        console.log( 'onLocationHashChanged', e );
 };
 
 Arbiter.saveOnUnload = function() {
@@ -427,19 +374,63 @@ Arbiter.saveOnUnload = function() {
 };
 
 Arbiter.onApplicationDidUnload = function() {
-    console.log( 'Application Did Unload' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Unload' );
 
     setTimeout( Arbiter.saveOnUnload, 0 );
 };
 
 Arbiter.onApplicationDidDisappear = function( e ) {
-    console.log( 'Application Did Disappear' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Disappear' );
+
     setTimeout( Arbiter.saveOnUnload, 0 );
     return Arbiter.onSpringBoardLoaded( e );
 };
 
 Arbiter.onApplicationDidReceiveMemoryWarning = function() {
-    console.log( 'Application Did Receive Memory Warning' );
+    if( Arbiter.verbose )
+        console.log( 'Application Did Receive Memory Warning' );
 };
 
 module.exports = Arbiter;
+
+
+/**
+ 'use strict';
+
+ const
+ Arbiter        = require( 'the-arbiter' ),
+ _pages         = require( '../../config/pages.json' ),
+ _a = window._a = new Arbiter( _pages );
+
+ window.onload = Arbiter.onApplicationDidLoad;
+ window.onbeforeunload = Arbiter.onApplicationDidUnload;
+ window.onhashchange = locationHashChanged;
+ window.addEventListener( 'popstate', pageDidChange );
+ document.addEventListener( 'DOMContentLoaded', e => Arbiter.onApplicationDidAppear() );
+
+ window.addEventListener( 'unhandledrejection', function( e ) {
+    e.preventDefault();
+    console.log( e.reason, e.promise );
+} );
+
+ _a.init();
+
+ function locationHashChanged( e ) {
+    if ( !_a.isPageRouted( location.hash ) )
+        return console.warn( `${location.hash} is not managed by The Arbiter.` );
+
+    if ( !_a.hashToKey( location.hash ) || _a.currentPage === '' || _a.isPageRendered( location.hash ) )
+        return;
+
+    _a.load( location.hash, true, () => console.log( location.hash + ' loaded' ) );
+
+    Arbiter.onLocationHashChanged( e );
+}
+
+ function pageDidChange( e ) {
+    locationHashChanged( e );
+    Arbiter.onPageDidChange( e );
+ }
+ */
