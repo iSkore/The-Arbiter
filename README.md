@@ -61,7 +61,7 @@ const
         ]
     },
     Arbiter = require( 'the-arbiter' ),
-    _a = new Arbiter( _pages );
+    _a = new Arbiter( _pages, true );
 
 _a.init();
 ```
@@ -106,7 +106,9 @@ _a.init();
 Manages page routing, monitoring, and lifecycle.
 
 - `constructor`
-    - Arguments: `none`
+    - Arguments:
+        - (array) pages: config object including the array of pages for the arbiter to manage
+        - (boolean) verbose: log the Arbiter's actions
     - Sets up routes, pages, and `currentPage`
 
 - `init`
@@ -407,7 +409,29 @@ Executes a string of code in a `container`.
 - `publish`
     - Arguments:
         - `(ANY) event`
-    - Invokes all subscribed functions and passes `event` 
+    - Invokes all subscribed functions and passes `event`
+
+------
+
+<br/>
+
+### CHANGELOG
+
+- `v0.1.7` - Added `verbose` flag for Arbiter logging
+- `v0.1.6` - Added Cleansing for The Librarian
+- `v0.1.5` - Bug fixes
+- `v0.1.4` - Fixed page refreshing issues on unhandled paths
+- `v0.1.3` - Fixed a few `location` issues
+- `v0.1.2` - Fixed `querystring-handling`
+- `v0.1.1` - Fixed `deep-path-handling`
+- `v0.1.0` - Added Cleansing for Polyfill - `universal-browser-support`
+- `v0.0.7` - Added The Librarian - still in progress
+- `v0.0.6` - Added PubSub class for publications on events
+- `v0.0.5` - Added separate page class
+- `v0.0.4` - Converted from loose files to a module, added The Monitor
+- `v0.0.3` - Added Generator and Executor for string-javascript execution
+- `v0.0.2` - Removed double request issue on preloaded pages
+- `v0.0.1` - First Commit
 
 [0]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/arbiter.png "The Arbiter"
 [1]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/monitor.png "The Monitor"
