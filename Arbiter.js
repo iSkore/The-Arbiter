@@ -288,7 +288,7 @@ class Arbiter extends Librarian
     }
 }
 
-Arbiter.activePage = Arbiter.sessionLoad( 'activePage' );
+Arbiter.activePage = Librarian.sessionLoad( 'activePage' );
 
 // Experimental purposes
 Arbiter.onSpringBoardLoaded = function( e ) {
@@ -298,7 +298,7 @@ Arbiter.onSpringBoardLoaded = function( e ) {
 
 Arbiter.onApplicationDidAppear = function( e ) {
     if( !Arbiter.activePage )
-        Arbiter.activePage = location.hash || Arbiter.sessionLoad( 'activePage' );
+        Arbiter.activePage = location.hash || Librarian.sessionLoad( 'activePage' );
     if( Arbiter.verbose )
         console.log( 'Application Did Appear' );
 };
@@ -328,7 +328,7 @@ Arbiter.onLocationHashChanged = function( e ) {
 Arbiter.saveOnUnload = function() {
     // Arbiter.sessionSave( 'activePage', Arbiter.activePage );
     // window.onbeforeunload = !Arbiter.activePage ? 'wait' : null;
-    window.onbeforeunload = ( Arbiter.sessionSave( 'activePage', Arbiter.activePage ), null );
+    window.onbeforeunload = ( Librarian.sessionSave( 'activePage', Arbiter.activePage ), null );
 };
 
 Arbiter.onApplicationDidUnload = function() {
