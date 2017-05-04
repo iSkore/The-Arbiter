@@ -72,6 +72,34 @@ class Librarian
     {
         return objectStore.createIndex( name, scheme );
     }
+
+    sessionSave( key, data )
+    {
+        Librarian.sessionSave( key, data );
+    }
+
+    static sessionSave( key, data )
+    {
+        if( data !== ''+data )
+            data = JSON.stringify( data );
+
+        Librarian.sessionStorage.setItem( key, data );
+    }
+
+    sessionLoad( key )
+    {
+        return Librarian.sessionLoad( key );
+    }
+
+    static sessionLoad( key )
+    {
+        let data = Librarian.sessionStorage.getItem( key );
+
+        try { data = JSON.parse( data ); }
+        catch( e ) {}
+
+        return data;
+    }
 }
 
 Librarian.location       = location       || window.location;

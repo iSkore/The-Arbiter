@@ -231,7 +231,7 @@ Manages page routing, monitoring, and lifecycle.
         - `(Page | string) page`
         - `(AND) event`
     - Publishes anything to all subscribers of a specified `Page`
-    
+
 ##### Static Methods
 
 - `onApplicationDidAppear`
@@ -379,7 +379,15 @@ Executes a string of code in a `container`.
 
 ![librarian][4]
 
-// TODO: Document this
+// TODO: Document Librarian
+
+------
+
+### Containment
+
+![containment][5]
+
+// TODO: Document Containment
 
 ------
 
@@ -438,3 +446,4 @@ Executes a string of code in a `container`.
 [2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/generator.png "The Generator"
 [3]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/executor.png "The Executor"
 [4]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/librarian.png "The Librarian"
+[5]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/containment.png "Containment"
