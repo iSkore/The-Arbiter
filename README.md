@@ -231,7 +231,7 @@ Manages page routing, monitoring, and lifecycle.
         - `(Page | string) page`
         - `(AND) event`
     - Publishes anything to all subscribers of a specified `Page`
-    
+
 ##### Static Methods
 
 - `onApplicationDidAppear`
@@ -379,7 +379,52 @@ Executes a string of code in a `container`.
 
 ![librarian][4]
 
-// TODO: Document this
+// TODO: Document Librarian
+
+------
+
+### Containment
+
+![containment][5]
+
+**Containment** is a simple `try-catch` function.
+Surprisingly enough, it is about 93% **MORE EFFICIENT** to put only **ONE** try catch in your code and have `try-catch` functions passed in... who-da-thunk?
+
+- `constructor`
+    - Arguments:
+        - `(object) flood`
+            - `(function) try` function to attempt
+            - `(function) error` function in the event of an error
+            - `(function) finally` function called regardless of the result
+            - `(function) result` function called with the result of `try`
+
+- `getResult`
+    - Arguments: `none`
+    - Returns the result of a `try` OR calls `result` again
+
+- `getError`
+    - Arguments: `none`
+    - Returns the error (likely the `stackTrace`) of an attempted `try`
+
+Example use case:
+
+```javascript
+const containment = new Containment( {
+    try: () => {
+        const i = 123;
+        return i = 321;
+    },
+    error: e => {
+        console.error( 'error', e );
+    },
+    finally: () => {
+        console.log( 'finally' );
+    },
+    result: r => {
+        console.log( 'result', r );
+    }
+} );
+```
 
 ------
 
@@ -438,3 +483,4 @@ Executes a string of code in a `container`.
 [2]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/generator.png "The Generator"
 [3]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/executor.png "The Executor"
 [4]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/librarian.png "The Librarian"
+[5]: https://raw.githubusercontent.com/iSkore/the-arbiter/master/docs/containment.png "Containment"

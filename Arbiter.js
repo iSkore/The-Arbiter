@@ -20,6 +20,8 @@ const
 
 // TODO - √ - create pubsub
 // TODO - √ - allow page pre, on, and post functions to be accessed and editable
+// TODO - √ - move containment function set to it's own class
+// TODO - √ - move session interaction to it's own class - Added to the Librarian
 
 class Arbiter extends Librarian
 {
@@ -170,50 +172,6 @@ class Arbiter extends Librarian
         }
 
         return false;
-    }
-
-    /**
-     * Session Storage
-     */
-    // TODO move this function set to it's own class
-    sessionSave( key, data )
-    {
-        Arbiter.sessionSave( key, data );
-    }
-
-    static sessionSave( key, data )
-    {
-        if( data !== ''+data )
-            data = JSON.stringify( data );
-
-        Arbiter.sessionStorage.setItem( key, data );
-    }
-
-    sessionLoad( key )
-    {
-        return Arbiter.sessionLoad( key );
-    }
-
-    static sessionLoad( key )
-    {
-        let data = Arbiter.sessionStorage.getItem( key );
-
-        try { data = JSON.parse( data ); }
-        catch( e ) {}
-
-        return data;
-    }
-    /**
-     * End Session Storage
-     */
-
-    containment( fn, cb = () => {} ) {
-        try {
-            const tried = fn();
-            cb( tried );
-        } catch( e ) {
-            cb( e );
-        }
     }
 
     changePage( hash )
