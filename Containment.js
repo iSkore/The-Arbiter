@@ -2,20 +2,29 @@
 
 class Containment
 {
-    constructor( fn, cb = () => {} )
+    constructor( flood )
     {
+        flood.try     = flood.try || ( () => {} );
+        flood.error   = flood.error || ( () => {} );
+        flood.finally = flood.finally || ( () => {} );
+        flood.result  = flood.result || ( () => {} );
+
+        this.flood = flood;
+
         try {
-            this.flood = fn();
-            cb( this.flood );
+            this.result = flood.try();
+            flood.result( this.result );
         } catch( e ) {
             this.error = e;
-            cb( e );
+            flood.error( e );
+        } finally {
+            flood.finally();
         }
     }
 
     getResult()
     {
-        return this.flood;
+        return this.result || this.flood.result( this.result ) || this.flood.result( this.flood.try() );
     }
 
     getError()
